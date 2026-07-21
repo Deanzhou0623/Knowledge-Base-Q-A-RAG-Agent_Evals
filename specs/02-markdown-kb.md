@@ -64,3 +64,5 @@ the baseline evaluation.
 - Restarting the service restores retrieval without re-indexing.
 - Re-indexing an unchanged corpus produces stable section IDs and ordering.
 - Unit tests cover heading and anchor edge cases plus serialization round trips.
+- Retrieved section citations can be matched directly against labeled Oracle
+  document sources during evaluation.
