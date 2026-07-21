@@ -61,3 +61,5 @@ load automatically at startup without recomputing document embeddings.
 - No document embedding call is made during startup restoration.
 - Chunking, metadata preservation, persistence, and search are covered by tests.
 - Embedding calls are mocked in unit tests and opt-in for integration tests.
+- Retrieved chunk citations can be matched against labeled Oracle document
+  sources without weakening source identity to filename-only matching.
