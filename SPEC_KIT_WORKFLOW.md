@@ -71,9 +71,9 @@ plans and tasks against those principles.
 
 ### 2. Specify
 
-Select one bounded capability from the six responsibility specs. Describe what users or
-evaluators need and why, including observable acceptance scenarios. Avoid making
-unnecessary technology decisions in the feature specification.
+Select one bounded capability from the six responsibility specs. Describe what
+users or evaluators need and why, including observable acceptance scenarios.
+Avoid making unnecessary technology decisions in the feature specification.
 
 Examples of bounded features include:
 

@@ -134,6 +134,9 @@ Retrieval and indexing may differ. Answer construction must not.
 
 ## Retrieval backend A: Markdown KB
 
+The labels A and B identify experimental arms, not implementation order. Vector
+RAG is delivered first according to the roadmap above.
+
 Implement this pipeline:
 
 ```text
@@ -524,16 +527,21 @@ never on `unsupported` or `user_specific`.
 
 ## Tests
 
-Add focused tests for:
+Add focused tests with the phase that owns each behavior. Do not postpone them
+until the evaluation runner:
 
-- Markdown heading parsing, including content before the first heading,
-  duplicate headings, nested headings, and empty sections;
-- deterministic citation-anchor generation;
-- deterministic vector chunking and metadata preservation;
-- top-three retrieval contract;
-- prompt construction and context delimiting;
-- exact fallback output;
-- prevention of citations outside retrieved context;
+- shared API, top-three retrieval, prompt construction, context delimiting,
+  exact fallback output, and prevention of citations outside retrieved context;
+- seed dataset schema, evidence resolution, Oracle references, corpus
+  fingerprint, and frozen version metadata;
+- Vector chunking, metadata preservation, embedding adapters, persistence,
+  restart restoration, and search;
+- UI handling of healthy, unindexed, answerable, unsupported, and server-error
+  API responses, plus safe source rendering;
+- Markdown heading parsing, including pre-heading content, duplicate and nested
+  headings, empty sections, deterministic anchors, BM25 retrieval, persistence,
+  and restart restoration;
+- the shared contract suite against both backends;
 - Oracle source resolution, minimal-evidence assembly, and verification that
   Oracle execution never invokes BM25 or FAISS;
 - deterministic synthetic transaction lookup and identical transaction context
@@ -562,21 +570,25 @@ Provide:
 1. both retrieval backends;
 2. the shared FastAPI service;
 3. persistent indexes and startup loading;
-4. sample Markdown documents;
-5. a shared grounded-answer prompt;
-6. unit and API tests;
-7. a reproducible comparison dataset and evaluation runner;
-8. machine-readable per-run results and a human-readable comparison summary;
-9. setup, configuration, indexing, serving, testing, and evaluation commands;
-10. exact dependency versions and an example environment file without secrets.
+4. a backend-neutral UI;
+5. sample Markdown documents;
+6. a shared grounded-answer prompt;
+7. phase-owned unit, contract, API, UI, and evaluation tests;
+8. a frozen seed dataset plus reproducible final comparison dataset and runner;
+9. machine-readable per-run results and a human-readable comparison summary;
+10. setup, configuration, indexing, serving, UI, testing, and evaluation
+    commands;
+11. exact dependency versions and an example environment file without secrets.
 
 ## Completion standard
 
 Do not stop after scaffolding. The task is complete when both backends can index
 the same corpus, survive a restart, answer through the same API, produce valid
-source citations or the exact fallback, pass the automated tests, and generate
-a side-by-side evaluation report under controlled settings.
+source citations or the exact fallback, operate through the backend-neutral UI,
+pass the automated tests, and generate a side-by-side evaluation report under
+controlled settings.
 
-Prioritize the core comparison. Streaming, browser UI, conversation memory,
-multi-format imports, answer filing, hybrid search, and reranking are out of
-scope until the controlled BM25-versus-FAISS evaluation works end to end.
+The minimal browser UI in Spec 04 is in scope. Streaming, conversation memory,
+multi-format imports, answer filing, hybrid search, reranking, and UI features
+beyond the specified API client remain out of scope until the controlled
+BM25-versus-FAISS evaluation works end to end.

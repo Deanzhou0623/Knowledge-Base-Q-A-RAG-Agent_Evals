@@ -10,6 +10,26 @@ consistent.
 > foundation. A real OpenAI evaluation run and a human-readable comparison
 > report remain explicit follow-up work; this scaffold is not benchmark evidence.
 
+### Current status and next phase
+
+The initial scaffold already contains both retrieval adapters because it was
+created before the delivery sequence was revised. The specifications now govern
+subsequent implementation and refactoring in this order:
+
+```text
+shared contracts + seed dataset
+  -> finish and verify Vector RAG
+  -> build the backend-neutral UI
+  -> reconcile and verify Markdown KB
+  -> complete the evaluation runner
+  -> expand and freeze the final dataset
+```
+
+The UI has not been implemented yet. Existing BM25 code is retained as scaffold
+work, but Markdown-specific feature development follows the Vector and UI
+phases. See the open reconciliation task in
+[`specs/002-phased-delivery/tasks.md`](specs/002-phased-delivery/tasks.md).
+
 ## Retrieval strategies
 
 | System | Document unit | Retrieval |
@@ -283,6 +303,10 @@ Run the machine-readable comparison after configuring an OpenAI key:
   --output results/eval.jsonl \
   --arms llm_only bm25 vector oracle
 ```
+
+These commands exercise the current API scaffold. UI setup and commands will be
+added during Spec 04 implementation; the README must not advertise an
+unimplemented browser interface.
 
 ## API
 
