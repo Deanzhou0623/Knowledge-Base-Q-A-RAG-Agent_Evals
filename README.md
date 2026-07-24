@@ -136,34 +136,41 @@ comparison still changes only document retrieval. Knowledge-base documents use
 
 ## Project specifications
 
-This repository is one comparison project composed of four major parts. Each
+This repository is one comparison project composed of six major parts. Each
 part has its own specification so it can be implemented and verified without
 mixing retrieval-specific behavior into shared code.
 
 | Part | Responsibility | Specification |
 | --- | --- | --- |
 | 1. Shared Q&A core | Common API, retrieval contract, grounded prompt, citations, fallback, and OpenAI answer generation | [`specs/01-shared-qa-core.md`](specs/01-shared-qa-core.md) |
-| 2. Markdown KB | Heading parsing, BM25 retrieval, and `.kb/index.json` persistence | [`specs/02-markdown-kb.md`](specs/02-markdown-kb.md) |
-| 3. Vector RAG | Chunking, embeddings, FAISS retrieval, and `.kb/faiss_index/` persistence | [`specs/03-vector-rag.md`](specs/03-vector-rag.md) |
-| 4. Evaluation runner | Controlled execution of both backends, metrics, failure labels, and comparison reports | [`specs/04-evaluation-runner.md`](specs/04-evaluation-runner.md) |
+| 2. Seed evaluation dataset | Frozen pre-implementation questions, gold evidence, and Oracle labels | [`specs/02-seed-evaluation-dataset.md`](specs/02-seed-evaluation-dataset.md) |
+| 3. Vector RAG | First retrieval vertical slice: chunks, embeddings, FAISS, persistence, and tests | [`specs/03-vector-rag.md`](specs/03-vector-rag.md) |
+| 4. User interface | Backend-neutral API client for indexing, questions, answers, and source inspection | [`specs/04-user-interface.md`](specs/04-user-interface.md) |
+| 5. Markdown KB | Heading parsing, plain BM25 retrieval, JSON persistence, and tests | [`specs/05-markdown-kb.md`](specs/05-markdown-kb.md) |
+| 6. Evaluation runner | Controlled execution, blind dataset expansion, metrics, and comparison reports | [`specs/06-evaluation-runner.md`](specs/06-evaluation-runner.md) |
 
 The evaluation runner contains two smaller evaluation tracks:
 
 1. **Retrieval evaluation** — Recall@K, retrieval failure labels, paraphrase
    robustness, and retrieval latency. See
-   [`specs/evals/04a-retrieval-evaluation.md`](specs/evals/04a-retrieval-evaluation.md).
+   [`specs/evals/06a-retrieval-evaluation.md`](specs/evals/06a-retrieval-evaluation.md).
 2. **Answer and citation evaluation** — correctness, citation accuracy,
    hallucination, fallback behavior, answer latency, and model cost. See
-   [`specs/evals/04b-answer-evaluation.md`](specs/evals/04b-answer-evaluation.md).
+   [`specs/evals/06b-answer-evaluation.md`](specs/evals/06b-answer-evaluation.md).
 
 ```text
-Shared Q&A core
-├── Markdown KB retriever
-├── Vector RAG retriever
-└── Evaluation runner
-    ├── Retrieval evaluation
-    └── Answer and citation evaluation
+Shared core + frozen seed dataset
+  -> Vector RAG + tests
+  -> backend-neutral UI + tests
+  -> Markdown KB + tests
+  -> evaluation runner
+  -> blind dataset expansion and freeze
+  -> final controlled evaluation
 ```
+
+This is a delivery order, not an experimental preference. Vector is implemented
+first for learning, while the final comparison still holds non-retrieval inputs
+constant and treats both backends symmetrically.
 
 ## Development methodology
 

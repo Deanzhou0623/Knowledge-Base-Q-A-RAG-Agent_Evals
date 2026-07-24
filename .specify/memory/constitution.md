@@ -8,6 +8,10 @@
 4. BM25 remains a transparent baseline without semantic enhancements.
 5. Live customer data never enters indexes, prompts, logs, or fixtures.
 6. AI-authored changes trace to a reviewed spec, plan, task, and test.
+7. Seed evaluation cases and gold evidence are frozen before retriever work and
+   are not rewritten to favor observed backend behavior.
+8. Tests are delivered with each phase; testing is never deferred until after
+   both retrievers are complete.
 
 ## Quality gates
 
@@ -15,3 +19,4 @@
 - Persistent artifacts are written atomically and validated before loading.
 - Every citation resolves to context supplied to that request.
 - Evaluation reports preserve per-arm and per-category results.
+- UI code remains backend-neutral and outside the controlled evaluation path.

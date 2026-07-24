@@ -14,7 +14,7 @@ has already been initialized.
 
 ## Project constitution
 
-Before implementation, establish governing principles that apply to all four
+Before implementation, establish governing principles that apply to all six
 major project parts:
 
 - source-grounded answers over convenience or fluency;
@@ -24,6 +24,9 @@ major project parts:
 - tests for behavior, contracts, persistence, and evaluation metrics;
 - simple BM25 baseline without optimization that conceals its failure modes;
 - requirement and task traceability for AI-generated changes;
+- seed questions and gold evidence frozen before retriever implementation;
+- tests delivered with every implementation phase rather than postponed;
+- a backend-neutral UI kept outside the controlled evaluation path;
 - no secrets, credentials, or hidden test data committed to the repository.
 
 Record these principles in the Spec Kit constitution after initialization.
@@ -36,11 +39,13 @@ The repository-level files define product intent:
 README.md
 prompt.md
 specs/01-shared-qa-core.md
-specs/02-markdown-kb.md
+specs/02-seed-evaluation-dataset.md
 specs/03-vector-rag.md
-specs/04-evaluation-runner.md
-specs/evals/04a-retrieval-evaluation.md
-specs/evals/04b-answer-evaluation.md
+specs/04-user-interface.md
+specs/05-markdown-kb.md
+specs/06-evaluation-runner.md
+specs/evals/06a-retrieval-evaluation.md
+specs/evals/06b-answer-evaluation.md
 ```
 
 Spec Kit feature artifacts refine that intent into implementation work:
@@ -66,15 +71,17 @@ plans and tasks against those principles.
 
 ### 2. Specify
 
-Select one bounded capability from the four major specs. Describe what users or
+Select one bounded capability from the six responsibility specs. Describe what users or
 evaluators need and why, including observable acceptance scenarios. Avoid making
 unnecessary technology decisions in the feature specification.
 
 Examples of bounded features include:
 
 - shared `/chat` request and response contract;
-- Markdown heading parser and persistent BM25 index;
+- frozen seed-case validation and evidence resolution;
 - deterministic vector chunking and FAISS restoration;
+- backend-neutral source and citation rendering;
+- Markdown heading parser and persistent BM25 index;
 - Recall@3 computation and per-case result serialization.
 
 ### 3. Clarify
@@ -113,6 +120,23 @@ Run unit, contract, integration, persistence, and evaluation checks appropriate
 to the change. Compare observed behavior with the feature specification and add
 remaining gaps back to the task list. A feature is complete only when its
 acceptance scenarios have evidence.
+
+## Delivery sequence
+
+```text
+shared contracts and offline test harness
+  -> frozen seed evaluation dataset
+  -> Vector RAG vertical slice and tests
+  -> backend-neutral UI and tests
+  -> Markdown KB baseline and tests
+  -> evaluation runner
+  -> blind dataset expansion and version freeze
+  -> final controlled evaluation
+```
+
+Spec numbers follow this delivery sequence. The final product still compares
+both retrievers symmetrically; implementing Vector first does not permit
+Vector-specific changes to shared behavior or later question selection.
 
 ## Refactoring rule
 

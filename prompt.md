@@ -27,18 +27,22 @@ Treat these documents as the detailed acceptance specifications for the build:
 
 1. [`specs/01-shared-qa-core.md`](specs/01-shared-qa-core.md) — shared API,
    retrieval contract, grounding, citations, and answer generation.
-2. [`specs/02-markdown-kb.md`](specs/02-markdown-kb.md) — heading sections,
-   BM25 retrieval, and JSON persistence.
+2. [`specs/02-seed-evaluation-dataset.md`](specs/02-seed-evaluation-dataset.md)
+   — frozen seed questions, gold evidence, and annotation rules.
 3. [`specs/03-vector-rag.md`](specs/03-vector-rag.md) — chunks, embeddings,
-   FAISS retrieval, and vector-index persistence.
-4. [`specs/04-evaluation-runner.md`](specs/04-evaluation-runner.md) — controlled
-   execution, result records, metrics, and comparison reporting.
+   FAISS retrieval, vector-index persistence, and phase tests.
+4. [`specs/04-user-interface.md`](specs/04-user-interface.md) — a
+   backend-neutral UI over the shared API.
+5. [`specs/05-markdown-kb.md`](specs/05-markdown-kb.md) — heading sections,
+   plain BM25 retrieval, JSON persistence, and phase tests.
+6. [`specs/06-evaluation-runner.md`](specs/06-evaluation-runner.md) —
+   controlled execution, blind dataset expansion, metrics, and reporting.
 
 The evaluation runner has two focused sub-specifications:
 
-- [`specs/evals/04a-retrieval-evaluation.md`](specs/evals/04a-retrieval-evaluation.md)
+- [`specs/evals/06a-retrieval-evaluation.md`](specs/evals/06a-retrieval-evaluation.md)
   for Recall@3, ranking, paraphrase robustness, retrieval failures, and latency.
-- [`specs/evals/04b-answer-evaluation.md`](specs/evals/04b-answer-evaluation.md)
+- [`specs/evals/06b-answer-evaluation.md`](specs/evals/06b-answer-evaluation.md)
   for correctness, citations, hallucinations, fallback behavior, latency, and
   answer-model cost.
 
@@ -66,6 +70,25 @@ Keep generated Spec Kit artifacts under version control. Every code change must
 trace back to a requirement and task. If implementation reveals a missing or
 incorrect requirement, update and review the specification first instead of
 allowing the code to become the undocumented source of truth.
+
+## Delivery order
+
+Implement the project in this order:
+
+```text
+shared contracts and offline test harness
+  -> frozen seed evaluation dataset
+  -> Vector RAG and its tests
+  -> backend-neutral UI and its tests
+  -> Markdown KB and its tests
+  -> evaluation runner
+  -> blind final-dataset expansion and version freeze
+  -> final controlled evaluation
+```
+
+Tests belong to every phase. The final dataset may be larger than the seed set,
+but its new questions and evidence must be written before inspecting any arm's
+outputs. Implementing Vector first must not change the final fairness contract.
 
 ## Non-negotiable behavior
 

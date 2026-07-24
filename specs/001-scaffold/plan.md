@@ -1,5 +1,8 @@
 # Implementation Plan: Runnable RAG Evaluation Scaffold
 
+> Historical artifact: task order below describes the completed initial
+> scaffold, not the current Vector-first delivery sequence.
+
 ## Stack
 
 - Python 3.10+

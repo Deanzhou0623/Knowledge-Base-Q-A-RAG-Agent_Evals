@@ -3,7 +3,21 @@
 ## Purpose
 
 Provide the semantic retrieval comparison: deterministic Markdown chunks
-retrieved through embeddings and a FAISS similarity index.
+retrieved through embeddings and a FAISS similarity index. This is the first
+complete retrieval vertical slice.
+
+## Delivery constraints
+
+- Implement only after the shared API and frozen seed dataset contracts are
+  reviewed.
+- Build against backend-neutral interfaces; do not place FAISS, embedding, or
+  chunk-specific logic in the shared API layer.
+- Add chunking, embedding-adapter, search, persistence, restart, API-contract,
+  and citation tests during this phase.
+- Use the seed dataset for regression checks, but do not tune chunking or
+  retrieval settings to maximize seed scores. Record failures as observations.
+- Record the initial chunking and embedding configuration before implementing
+  Markdown KB so later comparison changes remain auditable.
 
 ## Pipeline
 
