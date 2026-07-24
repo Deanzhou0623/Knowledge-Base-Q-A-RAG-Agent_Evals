@@ -1,0 +1,12 @@
+{
+  "version": "bookings-v1",
+  "bookings": [
+    {
+      "id": "BK-10023",
+      "status": "confirmed",
+      "property_id": "hotel-101",
+      "check_in": "2026-08-14T15:00:00+00:00",
+      "free_cancellation_until": "2026-08-10T18:00:00+00:00"
+    }
+  ]
+}

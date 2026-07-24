@@ -14,7 +14,7 @@ it does not implement retrieval scoring.
 - Define a common retriever interface for indexing, loading, and top-K search.
 - Request exactly the top three retrieval units for each chat query.
 - Build one shared grounded prompt from retrieved context.
-- Generate answers only with the OpenAI chat model `xx`.
+- Generate answers only with the OpenAI chat model `gpt-5.6-sol`.
 - Validate answer citations against retrieved source identifiers.
 - Return the exact fallback when evidence is insufficient:
 
