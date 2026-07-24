@@ -17,7 +17,7 @@ All evaluation arms must share:
 
 - corpus and corpus fingerprint;
 - evaluation questions and reference criteria;
-- exact OpenAI answer model `xx`;
+- exact OpenAI answer model `gpt-5.6-sol`;
 - generation settings;
 - graders, grader versions, and scoring thresholds;
 - the transaction-fixture version and, for time-sensitive cases, the frozen

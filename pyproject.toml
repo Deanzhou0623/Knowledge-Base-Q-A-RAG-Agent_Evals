@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "knowledge-base-rag-evals"
+version = "0.1.0"
+description = "E-commerce Q&A scaffold comparing BM25, Vector RAG, and LLM-only baselines"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "faiss-cpu==1.14.3",
+  "fastapi==0.139.2",
+  "numpy==2.2.6",
+  "openai==2.46.0",
+  "pydantic==2.13.4",
+  "pydantic-settings==2.14.2",
+  "rank-bm25==0.2.2",
+  "uvicorn[standard]==0.51.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx==0.28.1",
+  "pytest==9.0.2",
+  "pytest-cov==7.0.0",
+]
+
+[project.scripts]
+kbqa-eval = "kbqa.evals.runner:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kbqa"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["kbqa"]

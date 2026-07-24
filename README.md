@@ -6,8 +6,9 @@ semantic vector retrieval pipeline while keeping the rest of the experiment
 consistent.
 
 > [!NOTE]
-> This repository currently contains the project specification only. The service
-> implementation and runnable configuration still need to be added.
+> The `scaffold` branch contains a runnable, offline-tested implementation
+> foundation. A real OpenAI evaluation run and a human-readable comparison
+> report remain explicit follow-up work; this scaffold is not benchmark evidence.
 
 ## Retrieval strategies
 
@@ -232,13 +233,49 @@ I cannot confirm from the knowledge base.
 ## Model acknowledgement
 
 The only answer-generating LLM used by this project is the OpenAI chat model
-`xx`. No other LLM provider or answer model is used. The Vector RAG pipeline
-also requires an embedding model for retrieval; embeddings are retrieval
-features and do not generate answers.
+`gpt-5.6-sol`. No other LLM provider or answer model is used. The Vector RAG
+pipeline also requires an embedding model for retrieval; embeddings are
+retrieval features and do not generate answers.
 
-Before running a reproducible evaluation, replace `xx` with the exact pinned
-OpenAI model identifier in both the implementation and this README. Both
-retrieval systems must use that same pinned answer model.
+The default embedding model is `text-embedding-3-small`. Both retrieval systems
+use the same pinned answer model; the embedding model is used only by Vector RAG
+to create retrieval features.
+
+## Run the scaffold
+
+Python 3.10 or newer is required.
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -e '.[dev]'
+cp .env.example .env
+```
+
+Set `OPENAI_API_KEY` in `.env`, select `RETRIEVAL_BACKEND=bm25` or `vector`,
+then start the API:
+
+```bash
+.venv/bin/uvicorn kbqa.api:app --reload
+curl -X POST http://127.0.0.1:8000/index
+curl -X POST http://127.0.0.1:8000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"How long does a NovaStay refund take?"}'
+```
+
+Run offline tests without an OpenAI key:
+
+```bash
+.venv/bin/pytest
+```
+
+Run the machine-readable comparison after configuring an OpenAI key:
+
+```bash
+.venv/bin/kbqa-eval \
+  --dataset evals/cases.jsonl \
+  --output results/eval.jsonl \
+  --arms llm_only bm25 vector oracle
+```
 
 ## API
 
@@ -325,7 +362,7 @@ For a valid comparison, hold these inputs constant:
 - the same labeled balance of `company_specific`, `generic_ecommerce`,
   `user_specific`, and `unsupported` questions
 - `K = 3`
-- the OpenAI answer model (`xx`)
+- the OpenAI answer model (`gpt-5.6-sol`)
 - the grounded-answer prompt and fallback text
 - the citation formats (document `filename.md#heading` and structured-record
   `record-type:record-id#field`)

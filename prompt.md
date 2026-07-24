@@ -74,7 +74,7 @@ allowing the code to become the undocumented source of truth.
   refunds, payments, products, accounts, and customer support policies.
 - Retrieve the top three (`K = 3`) sections or chunks for every indexed query.
 - Give the answer model only retrieved context, not the full corpus.
-- Generate answers using only the OpenAI chat model `xx`.
+- Generate answers using only the OpenAI chat model `gpt-5.6-sol`.
 - Do not use another LLM provider or a second answer model.
 - Vector embeddings may use an embedding model; embeddings are retrieval
   features and must never generate answers.
@@ -92,8 +92,7 @@ I cannot confirm from the knowledge base.
   do not call the answer model.
 - Both indexes must survive server restarts and load automatically at startup.
 
-Before claiming the evaluation is reproducible, replace `xx` with an exact,
-pinned OpenAI model identifier in the code, configuration, README, and recorded
+Record the exact pinned model identifier in code, configuration, README, and
 evaluation metadata.
 
 ## Shared system flow
@@ -104,7 +103,7 @@ Question
   -> top 3 sections or chunks
   -> shared synthetic transaction lookup when required
   -> shared grounded prompt builder
-  -> OpenAI chat model xx
+  -> OpenAI chat model gpt-5.6-sol
   -> answer with auditable source references
 ```
 
