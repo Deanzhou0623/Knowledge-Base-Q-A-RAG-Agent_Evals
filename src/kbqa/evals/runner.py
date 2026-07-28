@@ -265,6 +265,7 @@ def run_case(
     index_metadata: dict[str, dict[str, Any]],
     embeddings: Any,
     cold_start: bool = False,
+    grader: Any | None = None,
     concurrency: int,
     retries: int,
 ) -> dict[str, Any]:
@@ -401,6 +402,7 @@ def run_case(
                 arm=arm,
                 supplied_citations=supplied_citations,
                 raw_citations=raw_citations,
+                grader=grader,
             )
             usage = generation.token_usage
             record["answer_token_usage"] = usage.model_dump()
@@ -481,6 +483,7 @@ def run(
     settings: Settings | None = None,
     generator: Any | None = None,
     embeddings: Any | None = None,
+    grader: Any | None = None,
     allow_live: bool = False,
     require_main_arms: bool = True,
     concurrency: int = 1,
@@ -510,10 +513,14 @@ def run(
     trial_count = trials or loaded.manifest.trials_per_question
     if trials is not None and trials != loaded.manifest.trials_per_question:
         raise ValueError("CLI trial count must match the frozen dataset manifest")
-    if loaded.manifest.grader_version != GRADER_VERSION:
+    from kbqa.evals.rubric import LexicalRubricGrader
+
+    active_grader = grader if grader is not None else LexicalRubricGrader()
+    if loaded.manifest.grader_version != active_grader.identity.version:
         raise ValueError(
-            "Dataset grader_version does not match the implemented grader: "
-            f"{loaded.manifest.grader_version!r} != {GRADER_VERSION!r}"
+            "Dataset grader_version does not match the active grader: "
+            f"{loaded.manifest.grader_version!r} != "
+            f"{active_grader.identity.version!r}"
         )
 
     if generator is None or embeddings is None:
@@ -637,6 +644,7 @@ def run(
             concurrency=concurrency,
             retries=retries,
             cold_start=(trial == 1 and index == 0),
+            grader=active_grader,
         )
         for trial in range(1, trial_count + 1)
         for index, case in enumerate(loaded.cases)
@@ -679,7 +687,26 @@ def main() -> None:
         action="store_true",
         help="Explicitly allow OpenAI answer and embedding API calls",
     )
+    parser.add_argument(
+        "--grader",
+        choices=["lexical", "openai-rubric"],
+        default="lexical",
+        help=(
+            "Correctness grader. 'lexical' is deterministic and offline; "
+            "'openai-rubric' calls the pinned answer model once per expected "
+            "fact and requires --live. The dataset manifest's grader_version "
+            "must match the grader used."
+        ),
+    )
     args = parser.parse_args()
+    if args.grader == "openai-rubric":
+        if not args.live:
+            raise SystemExit("--grader openai-rubric requires --live")
+        from kbqa.evals.rubric import OpenAIRubricGrader
+
+        grader = OpenAIRubricGrader()
+    else:
+        grader = None
     records = run(
         args.dataset,
         args.output,
@@ -687,6 +714,7 @@ def main() -> None:
         manifest=args.manifest,
         trials=args.trials,
         retries=args.retries,
+        grader=grader,
         allow_live=args.live,
     )
     failed = sum(record["status"] != "ok" for record in records)

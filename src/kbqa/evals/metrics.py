@@ -213,19 +213,26 @@ def answer_metrics(
     arm: str = "bm25",
     supplied_citations: Iterable[str] = (),
     raw_citations: list[str] | None = None,
+    grader: Any | None = None,
 ) -> dict[str, Any]:
     normalized_answer = normalize_text(answer)
-    fact_coverages = [
-        _fact_coverage(fact, answer) for fact in case.expected_facts
-    ]
-    matched_facts = [
-        coverage
-        for coverage in fact_coverages
-        if coverage >= FACT_TOKEN_RECALL_THRESHOLD
-    ]
-    correctness = (
-        len(matched_facts) / len(fact_coverages) if fact_coverages else None
+    from kbqa.evals.rubric import LexicalRubricGrader
+
+    active_grader = grader if grader is not None else LexicalRubricGrader(
+        FACT_TOKEN_RECALL_THRESHOLD
     )
+    verdicts = [
+        active_grader.grade_fact(case.question, fact, answer)
+        for fact in case.expected_facts
+    ]
+    fact_coverages = [verdict.score for verdict in verdicts]
+    matched_facts = [verdict for verdict in verdicts if verdict.supported]
+    correctness = len(matched_facts) / len(verdicts) if verdicts else None
+    # Contradiction is reported separately: an answer that states the opposite
+    # of the reference is a different failure from one that omits it.
+    contradicted_facts = [
+        verdict for verdict in verdicts if verdict.verdict == "contradicted"
+    ]
     exact_fallback = answer.strip() == FALLBACK_ANSWER
     is_contextual = arm in {"bm25", "vector", "oracle"}
     if case.answerable:
@@ -284,6 +291,17 @@ def answer_metrics(
     return {
         "correctness": correctness,
         "matched_facts": len(matched_facts),
+        "contradicted_facts": len(contradicted_facts),
+        "fact_verdicts": [
+            {
+                "expected_fact": fact,
+                "verdict": verdict.verdict,
+                "score": verdict.score,
+                "explanation": verdict.explanation,
+            }
+            for fact, verdict in zip(case.expected_facts, verdicts)
+        ],
+        **active_grader.identity.as_record(),
         "expected_facts": len(fact_coverages),
         "fact_coverages": fact_coverages,
         "fact_token_recall_threshold": FACT_TOKEN_RECALL_THRESHOLD,
