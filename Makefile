@@ -1,10 +1,13 @@
-.PHONY: install test serve index eval
+.PHONY: install test test-ui serve index eval
 
 install:
 	python3 -m pip install -e '.[dev]'
 
 test:
 	python3 -m pytest
+
+test-ui:
+	node --test tests/ui/*.test.mjs
 
 serve:
 	python3 -m uvicorn kbqa.api:app --reload

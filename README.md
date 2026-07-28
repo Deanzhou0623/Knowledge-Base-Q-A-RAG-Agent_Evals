@@ -35,6 +35,9 @@ GitHub-style anchors with deterministic duplicate suffixes, an inspectable JSON
 index with load-time validation, and phase-owned parser, retrieval, persistence,
 and shared-contract tests.
 
+The backend-neutral browser UI is available at `/ui/` and calls only the shared
+API.
+
 ## Retrieval strategies
 
 | System | Document unit | Retrieval |
@@ -337,9 +340,19 @@ Run the machine-readable comparison after configuring an OpenAI key:
   --arms llm_only bm25 vector oracle
 ```
 
-These commands exercise the current API scaffold. UI setup and commands will be
-added during Spec 04 implementation; the README must not advertise an
-unimplemented browser interface.
+Open `http://127.0.0.1:8000/ui/` after starting the API to use the browser
+interface. The page displays the configured backend and index readiness, can
+rebuild the selected index, submits questions through `/chat`, and shows ranked
+source details returned by the API. It contains no retrieval or grading logic.
+
+Run the browser-client contract tests with Node.js 20 or newer:
+
+```bash
+npm run test:ui
+```
+
+No npm packages need to be installed; the UI and its tests use browser and Node
+built-ins only.
 
 ## API
 
