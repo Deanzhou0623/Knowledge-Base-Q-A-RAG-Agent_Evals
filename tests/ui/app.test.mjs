@@ -205,3 +205,73 @@ function stubDocument() {
     }),
   };
 }
+
+test("backend selection flows through all three shared endpoints", async () => {
+  const calls = [];
+  const view = makeView();
+  const api = {
+    health: async (backend) => {
+      calls.push(["health", backend]);
+      return {
+        status: "ok",
+        backend: backend || "vector",
+        index_loaded: true,
+        backends: [
+          { backend: "bm25", index_loaded: true },
+          { backend: "vector", index_loaded: true },
+        ],
+      };
+    },
+    rebuild: async (backend) => {
+      calls.push(["rebuild", backend]);
+      return { files_indexed: 1, units_indexed: 1 };
+    },
+    chat: async (query, backend) => {
+      calls.push(["chat", backend]);
+      return {
+        answer: "ok",
+        backend: backend || "vector",
+        retrieval_ms: 1,
+        generation_ms: 1,
+        model: "gpt-5.6-sol",
+        retrieved: [],
+      };
+    },
+  };
+  const controller = createController(api, view);
+
+  await controller.selectBackend("bm25");
+  await controller.rebuild();
+  await controller.ask("How long do refunds take?");
+
+  // rebuild() also refreshes health, so that call is expected here.
+  assert.deepEqual(calls, [
+    ["health", "bm25"],
+    ["rebuild", "bm25"],
+    ["health", "bm25"],
+    ["chat", "bm25"],
+  ]);
+  // Every call went to the chosen backend, never the server default.
+  assert.ok(calls.every(([, backend]) => backend === "bm25"));
+  // The stale answer from the other retriever must not survive the switch.
+  assert.ok(view.events.some(([name]) => name === "clear-answer"));
+});
+
+test("the API client keeps the default request body unchanged", async () => {
+  const seen = [];
+  const fetchImpl = async (path, options = {}) => {
+    seen.push([path, options.body]);
+    return { ok: true, status: 200, json: async () => ({}) };
+  };
+  const api = createApiClient(fetchImpl);
+
+  await api.chat("question");
+  await api.chat("question", "vector");
+  await api.health();
+  await api.health("bm25");
+
+  assert.equal(seen[0][1], JSON.stringify({ query: "question" }));
+  assert.equal(seen[1][1], JSON.stringify({ query: "question", backend: "vector" }));
+  assert.equal(seen[2][0], "/health");
+  assert.equal(seen[3][0], "/health?backend=bm25");
+});

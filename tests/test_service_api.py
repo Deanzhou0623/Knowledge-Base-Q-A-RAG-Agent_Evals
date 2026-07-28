@@ -258,3 +258,43 @@ def test_top_k_setting_parses_a_string_environment_value():
 def test_embedding_model_is_pinned_for_production_configuration():
     with pytest.raises(ValidationError):
         Settings(openai_embedding_model="another-embedding-model")
+
+
+def test_health_lists_every_configured_backend(backend, corpus, booking_fixture, tmp_path):
+    service, _ = make_service(corpus, booking_fixture, tmp_path, backend=backend)
+    settings = settings_for(backend, corpus, booking_fixture)
+
+    with TestClient(create_app(settings, service)) as client:
+        payload = client.get("/health").json()
+
+    assert payload["backend"] == backend
+    assert [entry["backend"] for entry in payload["backends"]] == [backend]
+
+
+def test_chat_can_target_a_backend_without_changing_the_schema(
+    corpus, booking_fixture, tmp_path
+):
+    # Both backends are served by one app; selecting one changes no schema.
+    bm25, _ = make_service(corpus, booking_fixture, tmp_path / "a", backend="bm25")
+    vector, _ = make_service(corpus, booking_fixture, tmp_path / "b", backend="vector")
+    bm25.build_index()
+    vector.build_index()
+    settings = settings_for("bm25", corpus, booking_fixture)
+    app = create_app(settings, bm25)
+
+    with TestClient(app) as client:
+        app.state.services = {"bm25": bm25, "vector": vector}
+        health = client.get("/health").json()
+        default = client.post("/chat", json={"query": "How long does a refund take?"})
+        targeted = client.post(
+            "/chat",
+            json={"query": "How long does a refund take?", "backend": "vector"},
+        )
+        unknown = client.post("/chat", json={"query": "Refunds?", "backend": "faiss2"})
+
+    assert {entry["backend"] for entry in health["backends"]} == {"bm25", "vector"}
+    assert default.status_code == 200 and default.json()["backend"] == "bm25"
+    assert targeted.status_code == 200 and targeted.json()["backend"] == "vector"
+    assert default.json().keys() == targeted.json().keys()
+    # An unconfigured backend is a validation error, not a silent fallback.
+    assert unknown.status_code == 422

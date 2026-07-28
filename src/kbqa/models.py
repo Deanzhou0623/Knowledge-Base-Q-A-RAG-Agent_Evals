@@ -59,6 +59,9 @@ class ChatRequest(BaseModel):
     as_of: datetime | None = None
     expected_fixture_version: str | None = None
     requires_document_retrieval: bool = True
+    # Optional backend selection. The field exists for both backends and
+    # changes neither schema, so the shared contract is unchanged.
+    backend: Literal["bm25", "vector"] | None = None
 
     @field_validator("query")
     @classmethod
@@ -89,8 +92,17 @@ class ChatResponse(BaseModel):
     citation_guardrail_triggered: bool
 
 
+class BackendStatus(BaseModel):
+    backend: Literal["bm25", "vector"]
+    index_loaded: bool
+    available: bool = True
+
+
 class HealthResponse(BaseModel):
     status: Literal["ok"] = "ok"
     backend: Literal["bm25", "vector"]
     index_loaded: bool
     corpus_fingerprint: str | None = None
+    # Every backend this server can serve. The request and response schemas are
+    # identical for each, so switching changes no contract.
+    backends: list[BackendStatus] = Field(default_factory=list)
