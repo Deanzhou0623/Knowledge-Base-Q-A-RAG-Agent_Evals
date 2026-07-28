@@ -1,4 +1,4 @@
-# Spec 04B: Answer and Citation Evaluation
+# Spec 06B: Answer and Citation Evaluation
 
 ## Purpose
 

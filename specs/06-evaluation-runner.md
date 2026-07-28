@@ -1,4 +1,4 @@
-# Spec 04: Evaluation Runner
+# Spec 06: Evaluation Runner
 
 ## Purpose
 
@@ -8,8 +8,27 @@ inputs fixed.
 
 The runner contains two smaller tracks:
 
-1. [Retrieval evaluation](evals/04a-retrieval-evaluation.md)
-2. [Answer and citation evaluation](evals/04b-answer-evaluation.md)
+1. [Retrieval evaluation](evals/06a-retrieval-evaluation.md)
+2. [Answer and citation evaluation](evals/06b-answer-evaluation.md)
+
+The seed dataset contract is defined earlier in
+[Spec 02](02-seed-evaluation-dataset.md). This phase consumes that frozen seed
+set, adds the controlled runner, and may expand the dataset only through the
+blind annotation process defined below.
+
+## Delivery constraints
+
+- Do not begin final comparative runs until both backends pass their unit,
+  persistence, shared-contract, and API tests.
+- Treat tests created during backend implementation as required inputs, not as
+  work deferred to this phase.
+- Keep the seed dataset frozen. Corrections require a version change and an
+  auditable reason unrelated to observed arm performance.
+- Expand the final dataset using category targets and blind evidence annotation
+  before inspecting BM25, Vector, LLM-only, or Oracle outputs for those cases.
+- Freeze and version the expanded dataset before producing headline results.
+- The UI is not part of the evaluation execution path and must not alter
+  questions, prompts, retrieval results, or recorded timing.
 
 ## Controlled inputs
 
@@ -17,7 +36,7 @@ All evaluation arms must share:
 
 - corpus and corpus fingerprint;
 - evaluation questions and reference criteria;
-- exact OpenAI answer model `xx`;
+- exact OpenAI answer model `gpt-5.6-sol`;
 - generation settings;
 - graders, grader versions, and scoring thresholds;
 - the transaction-fixture version and, for time-sensitive cases, the frozen
@@ -102,6 +121,11 @@ Keep evaluation data outside the indexed `docs/` directory. Each case must have:
   makes the correct answer deterministic and reproducible;
 - optional paraphrase-group ID;
 - optional expected failure label.
+
+The final dataset extends, rather than replaces, the frozen seed dataset. New
+cases must be authored from the corpus and category plan without consulting
+retriever rankings or model answers. Gold evidence and Oracle sources must be
+recorded before a new case is executed against any arm.
 
 Define and record a minimum number of questions per arm-by-category cell so
 per-cell differences are not dominated by noise; state the chosen N in the

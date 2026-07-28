@@ -6,6 +6,10 @@ Define the behavior that must remain identical when comparing the Markdown KB
 and Vector RAG retrievers. This layer owns orchestration and answer generation;
 it does not implement retrieval scoring.
 
+This contract is established before either retriever. Vector RAG is the first
+backend implementation, but it may not introduce backend-specific behavior into
+the shared API or answer flow that Markdown KB would later be forced to copy.
+
 ## Responsibilities
 
 - Expose the shared FastAPI endpoints: `GET /health`, `POST /index`, and
@@ -14,7 +18,7 @@ it does not implement retrieval scoring.
 - Define a common retriever interface for indexing, loading, and top-K search.
 - Request exactly the top three retrieval units for each chat query.
 - Build one shared grounded prompt from retrieved context.
-- Generate answers only with the OpenAI chat model `xx`.
+- Generate answers only with the OpenAI chat model `gpt-5.6-sol`.
 - Validate answer citations against retrieved source identifiers.
 - Return the exact fallback when evidence is insufficient:
 
@@ -78,6 +82,9 @@ fields, version, and a stable `record-type:record-id#field` reference.
 - BM25 and Vector runs receive identical structured transaction results.
 - Live customer records are never written to either index, prompts, logs, or
   evaluation artifacts. Only synthetic fixtures are permitted in the prototype.
+- Contract tests use injectable fake answer and embedding providers and run
+  before the first backend is considered complete.
+- The same contract-test suite can be executed against both retrievers.
 
 ## Out of scope
 

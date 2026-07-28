@@ -6,8 +6,38 @@ semantic vector retrieval pipeline while keeping the rest of the experiment
 consistent.
 
 > [!NOTE]
-> This repository currently contains the project specification only. The service
-> implementation and runnable configuration still need to be added.
+> The repository contains an offline-tested controlled evaluation runner. A
+> checked-in report is not benchmark evidence until the final dataset is
+> expanded and frozen blind, current pricing is configured, and a live run is
+> completed with the explicit opt-in described below.
+
+### Current status and next phase
+
+The initial scaffold already contains both retrieval adapters because it was
+created before the delivery sequence was revised. The specifications now govern
+subsequent implementation and refactoring in this order:
+
+```text
+shared contracts + seed dataset
+  -> finish and verify Vector RAG
+  -> build the backend-neutral UI
+  -> reconcile and verify Markdown KB
+  -> expand and freeze the final dataset
+  -> run and review the final controlled comparison
+```
+
+The Vector phase has deterministic chunking and ranking, complete persisted
+configuration validation, restart restoration without document re-embedding,
+and phase-owned offline tests.
+
+The Markdown-specific reconciliation is complete and documented under
+[`specs/005-markdown-kb/`](specs/005-markdown-kb/): heading-hierarchy parsing,
+GitHub-style anchors with deterministic duplicate suffixes, an inspectable JSON
+index with load-time validation, and phase-owned parser, retrieval, persistence,
+and shared-contract tests.
+
+The backend-neutral browser UI is available at `/ui/` and calls only the shared
+API.
 
 ## Retrieval strategies
 
@@ -135,34 +165,41 @@ comparison still changes only document retrieval. Knowledge-base documents use
 
 ## Project specifications
 
-This repository is one comparison project composed of four major parts. Each
+This repository is one comparison project composed of six major parts. Each
 part has its own specification so it can be implemented and verified without
 mixing retrieval-specific behavior into shared code.
 
 | Part | Responsibility | Specification |
 | --- | --- | --- |
 | 1. Shared Q&A core | Common API, retrieval contract, grounded prompt, citations, fallback, and OpenAI answer generation | [`specs/01-shared-qa-core.md`](specs/01-shared-qa-core.md) |
-| 2. Markdown KB | Heading parsing, BM25 retrieval, and `.kb/index.json` persistence | [`specs/02-markdown-kb.md`](specs/02-markdown-kb.md) |
-| 3. Vector RAG | Chunking, embeddings, FAISS retrieval, and `.kb/faiss_index/` persistence | [`specs/03-vector-rag.md`](specs/03-vector-rag.md) |
-| 4. Evaluation runner | Controlled execution of both backends, metrics, failure labels, and comparison reports | [`specs/04-evaluation-runner.md`](specs/04-evaluation-runner.md) |
+| 2. Seed evaluation dataset | Frozen pre-implementation questions, gold evidence, and Oracle labels | [`specs/02-seed-evaluation-dataset.md`](specs/02-seed-evaluation-dataset.md) |
+| 3. Vector RAG | First retrieval vertical slice: chunks, embeddings, FAISS, persistence, and tests | [`specs/03-vector-rag.md`](specs/03-vector-rag.md) |
+| 4. User interface | Backend-neutral API client for indexing, questions, answers, and source inspection | [`specs/04-user-interface.md`](specs/04-user-interface.md) |
+| 5. Markdown KB | Heading parsing, plain BM25 retrieval, JSON persistence, and tests | [`specs/05-markdown-kb.md`](specs/05-markdown-kb.md) |
+| 6. Evaluation runner | Controlled execution, blind dataset expansion, metrics, and comparison reports | [`specs/06-evaluation-runner.md`](specs/06-evaluation-runner.md) |
 
 The evaluation runner contains two smaller evaluation tracks:
 
 1. **Retrieval evaluation** — Recall@K, retrieval failure labels, paraphrase
    robustness, and retrieval latency. See
-   [`specs/evals/04a-retrieval-evaluation.md`](specs/evals/04a-retrieval-evaluation.md).
+   [`specs/evals/06a-retrieval-evaluation.md`](specs/evals/06a-retrieval-evaluation.md).
 2. **Answer and citation evaluation** — correctness, citation accuracy,
    hallucination, fallback behavior, answer latency, and model cost. See
-   [`specs/evals/04b-answer-evaluation.md`](specs/evals/04b-answer-evaluation.md).
+   [`specs/evals/06b-answer-evaluation.md`](specs/evals/06b-answer-evaluation.md).
 
 ```text
-Shared Q&A core
-├── Markdown KB retriever
-├── Vector RAG retriever
-└── Evaluation runner
-    ├── Retrieval evaluation
-    └── Answer and citation evaluation
+Shared core + frozen seed dataset
+  -> Vector RAG + tests
+  -> backend-neutral UI + tests
+  -> Markdown KB + tests
+  -> evaluation runner
+  -> blind dataset expansion and freeze
+  -> final controlled evaluation
 ```
+
+This is a delivery order, not an experimental preference. Vector is implemented
+first for learning, while the final comparison still holds non-retrieval inputs
+constant and treats both backends symmetrically.
 
 ## Development methodology
 
@@ -232,13 +269,115 @@ I cannot confirm from the knowledge base.
 ## Model acknowledgement
 
 The only answer-generating LLM used by this project is the OpenAI chat model
-`xx`. No other LLM provider or answer model is used. The Vector RAG pipeline
-also requires an embedding model for retrieval; embeddings are retrieval
-features and do not generate answers.
+`gpt-5.6-sol`. No other LLM provider or answer model is used. The Vector RAG
+pipeline also requires an embedding model for retrieval; embeddings are
+retrieval features and do not generate answers.
 
-Before running a reproducible evaluation, replace `xx` with the exact pinned
-OpenAI model identifier in both the implementation and this README. Both
-retrieval systems must use that same pinned answer model.
+The default embedding model is `text-embedding-3-small`. Both retrieval systems
+use the same pinned answer model; the embedding model is used only by Vector RAG
+to create retrieval features.
+
+The initial Vector RAG configuration is deliberately fixed and auditable:
+whitespace-word chunks contain 160 words with 30 words of overlap, document and
+query vectors are L2-normalized, and FAISS `IndexFlatIP` ranks their inner
+product (cosine similarity after normalization). The persisted metadata records
+this configuration, the returned vector dimension, and the embedding model.
+
+## Run the scaffold
+
+Python 3.10 or newer is required.
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -e '.[dev]'
+cp .env.example .env
+```
+
+Set `OPENAI_API_KEY` in `.env`, select `RETRIEVAL_BACKEND=bm25` or `vector`,
+then start the API:
+
+```bash
+.venv/bin/uvicorn kbqa.api:app --reload
+curl -X POST http://127.0.0.1:8000/index
+curl -X POST http://127.0.0.1:8000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"How long does a NovaStay refund take?"}'
+```
+
+Run offline tests without an OpenAI key:
+
+```bash
+.venv/bin/pytest
+```
+
+Validate the frozen seed dataset without calling an LLM or retriever:
+
+```bash
+.venv/bin/python -m kbqa.evals.dataset \
+  --manifest evals/manifest.json \
+  --docs docs \
+  --transactions fixtures/bookings.json
+```
+
+The manifest pins seed version `seed-v1`, its annotation date, the exact
+`cases.jsonl` SHA-256, the corpus fingerprint, and transaction fixture
+`bookings-v1`. A factual annotation correction requires a new dataset version,
+an updated `change_reason`, and reviewed hashes; cases must not be changed in
+response to backend outputs.
+
+The real Vector embedding smoke test is deliberately opt-in:
+
+```bash
+RUN_OPENAI_INTEGRATION=1 OPENAI_API_KEY="sk-..." \
+  .venv/bin/pytest tests/test_vector_integration.py
+```
+
+Run the machine-readable comparison after configuring an OpenAI key:
+
+```bash
+.venv/bin/kbqa-eval \
+  --dataset evals/manifest.json \
+Validate the frozen dataset without calling OpenAI:
+
+```bash
+PYTHONPATH=src .venv/bin/python -c \
+  'from pathlib import Path; from kbqa.evals.dataset import validate_dataset; from kbqa.config import Settings; s=Settings(); validate_dataset(Path("evals/cases.jsonl"), Path("evals/manifest.json"), docs_path=s.docs_path, transaction_fixture_path=s.transaction_fixture_path)'
+```
+
+Run the controlled comparison after configuring an OpenAI key and current
+per-million-token prices in `.env`. Live provider calls require `--live`, so an
+accidental CLI invocation cannot spend money:
+
+```bash
+.venv/bin/kbqa-eval \
+  --dataset evals/cases.jsonl \
+  --manifest evals/manifest.json \
+  --output results/eval.jsonl \
+  --arms llm_only bm25 vector oracle \
+  --live
+```
+
+Open `http://127.0.0.1:8000/ui/` after starting the API to use the browser
+interface. The page displays the configured backend and index readiness, can
+rebuild the selected index, submits questions through `/chat`, and shows ranked
+source details returned by the API. It contains no retrieval or grading logic.
+
+Run the browser-client contract tests with Node.js 20 or newer:
+
+```bash
+npm run test:ui
+```
+
+No npm packages need to be installed; the UI and its tests use browser and Node
+built-ins only.
+The command writes auditable per-case JSONL, `results/eval.summary.json`, and
+`results/eval.report.md`. Failed cases remain in the output with an error status.
+The frozen manifest controls category minimums and trial count; CLI trial
+overrides that disagree with it are rejected. Oracle is optional and runs only
+on answerable cases without invoking either retriever.
+
+These commands exercise the current API and evaluation implementation. UI setup
+and commands are owned by Spec 04.
 
 ## API
 
@@ -263,6 +402,13 @@ Indexes are stored locally and must load automatically when the server restarts.
 | Vector RAG | `.kb/faiss_index/` |
 
 Calling `/index` rebuilds the relevant index from the Markdown files in `docs/`.
+
+The Markdown KB index is intentionally inspectable JSON. It records complete
+heading-section records (including heading level and hierarchy), stable IDs,
+canonical citations, the corpus fingerprint, schema/parser/tokenizer versions,
+the unmodified `rank_bm25.BM25Okapi` parameters, and the tokenized corpus needed
+for deterministic restoration. Incompatible or incomplete index files are
+reported as unavailable and are never silently rebuilt during chat.
 
 ## Evaluation focus
 
@@ -325,7 +471,7 @@ For a valid comparison, hold these inputs constant:
 - the same labeled balance of `company_specific`, `generic_ecommerce`,
   `user_specific`, and `unsupported` questions
 - `K = 3`
-- the OpenAI answer model (`xx`)
+- the OpenAI answer model (`gpt-5.6-sol`)
 - the grounded-answer prompt and fallback text
 - the citation formats (document `filename.md#heading` and structured-record
   `record-type:record-id#field`)
