@@ -81,6 +81,9 @@ def test_grounded_chat_accepts_only_supplied_citations(
     response = service.chat(ChatRequest(query="How long does a refund take?"))
     assert response.answer == valid
     assert response.citations == ["policy.md#refund-policy"]
+    assert "raw_answer" not in response.model_dump()
+    assert "raw_citations" not in response.model_dump()
+    assert "citation_guardrail_triggered" not in response.model_dump()
     assert response.model == "fake-answer-model"
     assert response.prompt_version == "grounded-v1"
     assert response.token_usage.total_tokens == 14
@@ -89,6 +92,7 @@ def test_grounded_chat_accepts_only_supplied_citations(
     response = service.chat(ChatRequest(query="How long does a refund take?"))
     assert response.answer == FALLBACK_ANSWER
     assert response.citations == []
+    assert "Tomorrow" not in response.model_dump_json()
 
 
 def test_transaction_only_chat_does_not_require_an_index(

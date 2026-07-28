@@ -319,7 +319,7 @@ Validate the frozen seed dataset without calling an LLM or retriever:
   --transactions fixtures/bookings.json
 ```
 
-The manifest pins seed version `seed-v1`, its annotation date, the exact
+The manifest pins seed version `seed-v1.1`, its annotation date, the exact
 `cases.jsonl` SHA-256, the corpus fingerprint, and transaction fixture
 `bookings-v1`. A factual annotation correction requires a new dataset version,
 an updated `change_reason`, and reviewed hashes; cases must not be changed in
@@ -330,18 +330,6 @@ The real Vector embedding smoke test is deliberately opt-in:
 ```bash
 RUN_OPENAI_INTEGRATION=1 OPENAI_API_KEY="sk-..." \
   .venv/bin/pytest tests/test_vector_integration.py
-```
-
-Run the machine-readable comparison after configuring an OpenAI key:
-
-```bash
-.venv/bin/kbqa-eval \
-  --dataset evals/manifest.json \
-Validate the frozen dataset without calling OpenAI:
-
-```bash
-PYTHONPATH=src .venv/bin/python -c \
-  'from pathlib import Path; from kbqa.evals.dataset import validate_dataset; from kbqa.config import Settings; s=Settings(); validate_dataset(Path("evals/cases.jsonl"), Path("evals/manifest.json"), docs_path=s.docs_path, transaction_fixture_path=s.transaction_fixture_path)'
 ```
 
 Run the controlled comparison after configuring an OpenAI key and current
@@ -357,6 +345,12 @@ accidental CLI invocation cannot spend money:
   --live
 ```
 
+The command writes auditable per-case JSONL, `results/eval.summary.json`, and
+`results/eval.report.md`. Failed cases remain in the output with an error status.
+The frozen manifest controls category minimums and trial count; CLI trial
+overrides that disagree with it are rejected. Oracle is optional and runs only
+on answerable cases without invoking either retriever.
+
 Correctness grading is deterministic and offline by default. The rubric grader
 that calls the pinned answer model once per expected fact is opt-in and
 requires `--live`:
@@ -371,8 +365,9 @@ requires `--live`:
 Every result records the grader's name, version, model, prompt version, and
 settings, plus a per-fact verdict and a one-sentence justification, so a change
 in measured correctness can be attributed to the system or to the grader. The
-dataset manifest pins `grader_version`, and a run whose grader does not match
-it is rejected.
+dataset manifest pins the default deterministic grader version. An explicitly
+selected rubric grader records its own distinct version and should be analyzed
+as a separate grading run rather than mixed with deterministic results.
 
 Open `http://127.0.0.1:8000/ui/` after starting the API to use the browser
 interface. The page displays the active backend and index readiness, can
@@ -392,11 +387,6 @@ npm run test:ui
 
 No npm packages need to be installed; the UI and its tests use browser and Node
 built-ins only.
-The command writes auditable per-case JSONL, `results/eval.summary.json`, and
-`results/eval.report.md`. Failed cases remain in the output with an error status.
-The frozen manifest controls category minimums and trial count; CLI trial
-overrides that disagree with it are rejected. Oracle is optional and runs only
-on answerable cases without invoking either retriever.
 
 These commands exercise the current API and evaluation implementation. UI setup
 and commands are owned by Spec 04.

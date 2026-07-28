@@ -613,3 +613,40 @@ def test_records_carry_the_identity_of_the_grader_that_produced_them(tmp_path):
         assert metrics["grader_version"] == "deterministic-v2"
         assert len(metrics["fact_verdicts"]) == metrics["expected_facts"]
         assert all(v["verdict"] for v in metrics["fact_verdicts"])
+
+
+def test_explicit_openai_rubric_records_its_own_version(tmp_path):
+    class FakeResponses:
+        def create(self, **kwargs):
+            return SimpleNamespace(output_text="SUPPORTED\nThe fact is present.")
+
+    cases_path, manifest_path, settings = _write_dataset(tmp_path)
+    grader = OpenAIRubricGrader(
+        client=SimpleNamespace(responses=FakeResponses())
+    )
+    records = runner.run(
+        cases_path,
+        tmp_path / "results" / "rubric.jsonl",
+        ["llm_only", "bm25", "vector"],
+        manifest=manifest_path,
+        settings=settings,
+        generator=ControlledGenerator(),
+        embeddings=FakeEmbeddings(),
+        grader=grader,
+    )
+
+    graded = [
+        record for record in records if record["answer_metrics"]["expected_facts"]
+    ]
+    assert graded
+    assert {record["grader_version"] for record in graded} == {"rubric-v1"}
+    assert {
+        record["answer_metrics"]["grader_version"] for record in graded
+    } == {"rubric-v1"}
+    assert {
+        record["answer_metrics"]["grader_name"] for record in graded
+    } == {"openai-rubric"}
+    assert all(
+        record["answer_metrics"]["fact_token_recall_threshold"] is None
+        for record in graded
+    )

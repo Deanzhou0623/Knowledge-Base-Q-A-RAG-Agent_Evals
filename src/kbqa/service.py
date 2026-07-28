@@ -1,4 +1,5 @@
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
 
@@ -22,6 +23,15 @@ CITATION_RE = re.compile(r"\[([^\[\]\n]+)\]")
 
 class IndexNotReady(RuntimeError):
     pass
+
+
+@dataclass(frozen=True)
+class ChatGenerationTrace:
+    """Internal generation details retained for evaluation, never public API output."""
+
+    raw_answer: str
+    raw_citations: list[str]
+    citation_guardrail_triggered: bool
 
 
 def extract_citations(answer: str) -> list[str]:
@@ -65,6 +75,12 @@ class QAService:
         return self.retriever.build(self.docs_path)
 
     def chat(self, request: ChatRequest) -> ChatResponse:
+        response, _ = self.chat_with_trace(request)
+        return response
+
+    def chat_with_trace(
+        self, request: ChatRequest
+    ) -> tuple[ChatResponse, ChatGenerationTrace]:
         if request.requires_document_retrieval and not self.retriever.loaded:
             raise IndexNotReady("The knowledge base has not been indexed yet.")
 
@@ -101,7 +117,7 @@ class QAService:
             citations = []
             guardrail_triggered = True
 
-        return ChatResponse(
+        response = ChatResponse(
             answer=answer,
             backend=self.retriever.backend,
             sources=sorted(allowed),
@@ -113,7 +129,10 @@ class QAService:
             model=self.generator.model,
             prompt_version=PROMPT_VERSION,
             token_usage=generation.token_usage,
+        )
+        trace = ChatGenerationTrace(
             raw_answer=raw_answer,
             raw_citations=raw_citations,
             citation_guardrail_triggered=guardrail_triggered,
         )
+        return response, trace

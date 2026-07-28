@@ -304,7 +304,9 @@ def answer_metrics(
         **active_grader.identity.as_record(),
         "expected_facts": len(fact_coverages),
         "fact_coverages": fact_coverages,
-        "fact_token_recall_threshold": FACT_TOKEN_RECALL_THRESHOLD,
+        "fact_token_recall_threshold": active_grader.identity.settings.get(
+            "fact_token_recall_threshold"
+        ),
         "citation_accuracy": citation_accuracy,
         "citation_validity": citation_validity,
         "unsupported_claim_rate": unsupported_claim_rate,
@@ -312,10 +314,10 @@ def answer_metrics(
         "exact_fallback": exact_fallback,
         "refusal_calibrated": fallback_correct if not case.answerable else None,
         "control_citation_violation": bool(citations) if arm == "llm_only" else None,
-        "grader_version": GRADER_VERSION,
         "grader_explanation": (
             f"Matched {len(matched_facts)}/{len(fact_coverages)} expected facts "
-            f"using content-token recall >= {FACT_TOKEN_RECALL_THRESHOLD:.1f}; "
+            f"using {active_grader.identity.name} "
+            f"{active_grader.identity.version}; "
             f"fallback_correct={fallback_correct}; "
             f"citation_validity={citation_validity}."
         ),

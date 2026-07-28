@@ -11,7 +11,6 @@ from kbqa.config import Settings
 from kbqa.embeddings import OpenAIEmbeddingProvider
 from kbqa.evals.dataset import EvalCase, EvaluationDataset, validate_dataset
 from kbqa.evals.metrics import (
-    GRADER_VERSION,
     answer_metrics,
     paraphrase_robustness,
     retrieval_metrics,
@@ -164,6 +163,7 @@ def _empty_record(
     cold_start: bool,
     answer_model: str,
     embedding_model: str,
+    grader_version: str,
 ) -> dict[str, Any]:
     return {
         "run_id": run_id,
@@ -237,7 +237,7 @@ def _empty_record(
             "temperature": None,
             "deterministic_where_supported": True,
         },
-        "grader_version": dataset.manifest.grader_version,
+        "grader_version": grader_version,
         "top_k": 3 if arm in {"bm25", "vector"} else None,
         "corpus_fingerprint": dataset.manifest.corpus_fingerprint,
         "index_configuration": None,
@@ -265,7 +265,7 @@ def run_case(
     index_metadata: dict[str, dict[str, Any]],
     embeddings: Any,
     cold_start: bool = False,
-    grader: Any | None = None,
+    grader: Any,
     concurrency: int,
     retries: int,
 ) -> dict[str, Any]:
@@ -282,6 +282,7 @@ def run_case(
         cold_start=cold_start,
         answer_model=generator.model,
         embedding_model=getattr(embeddings, "model", None),
+        grader_version=grader.identity.version,
     )
     if arm in index_metadata:
         record.update(index_metadata[arm])
@@ -335,7 +336,7 @@ def run_case(
                         or f"Missing service for evaluation arm {arm}"
                     )
                 embedding_before = _usage(embeddings)
-                response = service.chat(
+                response, trace = service.chat_with_trace(
                     ChatRequest(
                         query=case.question,
                         booking_id=case.booking_id,
@@ -372,9 +373,9 @@ def run_case(
                 supplied_citations = set(response.sources)
                 record["retrieval_ms"] = response.retrieval_ms
                 record["generation_ms"] = response.generation_ms
-                raw_answer = response.raw_answer
-                raw_citations = list(response.raw_citations)
-                guardrail_triggered = response.citation_guardrail_triggered
+                raw_answer = trace.raw_answer
+                raw_citations = list(trace.raw_citations)
+                guardrail_triggered = trace.citation_guardrail_triggered
                 generation = type("Generation", (), {"token_usage": response.token_usage})()
 
             record["answer"] = answer
@@ -516,9 +517,12 @@ def run(
     from kbqa.evals.rubric import LexicalRubricGrader
 
     active_grader = grader if grader is not None else LexicalRubricGrader()
-    if loaded.manifest.grader_version != active_grader.identity.version:
+    if (
+        grader is None
+        and loaded.manifest.grader_version != active_grader.identity.version
+    ):
         raise ValueError(
-            "Dataset grader_version does not match the active grader: "
+            "Dataset grader_version does not match the default grader: "
             f"{loaded.manifest.grader_version!r} != "
             f"{active_grader.identity.version!r}"
         )
@@ -694,17 +698,21 @@ def main() -> None:
         help=(
             "Correctness grader. 'lexical' is deterministic and offline; "
             "'openai-rubric' calls the pinned answer model once per expected "
-            "fact and requires --live. The dataset manifest's grader_version "
-            "must match the grader used."
+            "fact and requires --live. The manifest pins the default lexical "
+            "grader; an explicitly selected rubric grader records its own identity."
         ),
     )
     args = parser.parse_args()
+    active_settings = Settings()
     if args.grader == "openai-rubric":
         if not args.live:
             raise SystemExit("--grader openai-rubric requires --live")
         from kbqa.evals.rubric import OpenAIRubricGrader
 
-        grader = OpenAIRubricGrader()
+        grader = OpenAIRubricGrader(
+            model=active_settings.openai_chat_model,
+            api_key=active_settings.openai_api_key,
+        )
     else:
         grader = None
     records = run(
@@ -716,6 +724,7 @@ def main() -> None:
         retries=args.retries,
         grader=grader,
         allow_live=args.live,
+        settings=active_settings,
     )
     failed = sum(record["status"] != "ok" for record in records)
     print(f"Wrote {len(records)} records to {args.output} ({failed} failed)")
