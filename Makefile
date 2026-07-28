@@ -1,4 +1,4 @@
-.PHONY: install test test-ui serve index eval
+.PHONY: install test test-ui serve index eval validate-dataset
 
 install:
 	python3 -m pip install -e '.[dev]'
@@ -16,4 +16,9 @@ index:
 	curl -X POST http://127.0.0.1:8000/index
 
 eval:
-	python3 -m kbqa.evals.runner --dataset evals/seed-v1.manifest.json --output results/eval.jsonl
+	python3 -m kbqa.evals.runner --live --dataset evals/cases.jsonl \
+	  --manifest evals/manifest.json --output results/eval.jsonl
+
+validate-dataset:
+	python3 -m kbqa.evals.dataset --manifest evals/manifest.json \
+	  --docs docs --transactions fixtures/bookings.json

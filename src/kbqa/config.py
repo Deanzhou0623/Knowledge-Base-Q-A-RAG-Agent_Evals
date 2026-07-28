@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     vector_chunk_words: int = Field(default=160, ge=20)
     vector_chunk_overlap: int = Field(default=30, ge=0)
     max_output_tokens: int = Field(default=500, ge=1)
+    answer_input_usd_per_million_tokens: float = Field(default=0.0, ge=0)
+    answer_output_usd_per_million_tokens: float = Field(default=0.0, ge=0)
+    embedding_usd_per_million_tokens: float = Field(default=0.0, ge=0)
 
     @model_validator(mode="after")
     def validate_chunking(self) -> "Settings":

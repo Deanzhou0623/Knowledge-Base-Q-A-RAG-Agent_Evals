@@ -81,6 +81,12 @@ class ChatResponse(BaseModel):
     model: str
     prompt_version: str
     token_usage: TokenUsage
+    # The answer and citations exactly as generated, before the citation
+    # guardrail may replace them with the fallback. Graded citation
+    # validity must use these or a fabricated citation is unobservable.
+    raw_answer: str
+    raw_citations: list[str]
+    citation_guardrail_triggered: bool
 
 
 class HealthResponse(BaseModel):

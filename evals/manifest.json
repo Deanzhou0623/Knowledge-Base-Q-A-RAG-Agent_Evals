@@ -1,0 +1,24 @@
+{
+  "annotation_blinded": true,
+  "annotation_date": "2026-07-28",
+  "cases_file": "cases.jsonl",
+  "cases_sha256": "f5134337a27279953219e29bde5ab7975c7c7c100961ab44b12cab853b238f70",
+  "change_reason": "Seed set frozen before retriever implementation; v1.1 adds unsupported-retrieval relevance labels required by Spec 06A.",
+  "corpus_fingerprint": "0c16dee61a6dcb833fe5dda8ac0ebeba2c99a55753753fce62aeceafaf3d3978",
+  "corpus_tier": "primary_controlled",
+  "dataset_id": "novastay-seed",
+  "dataset_version": "seed-v1.1",
+  "estimate_type": "single_run_point_estimate",
+  "grader_version": "deterministic-v2",
+  "minimum_questions_per_category": 1,
+  "notes": [
+    "Seed cases and gold evidence were authored before comparative arm execution.",
+    "Version 1.1 adds unsupported-retrieval relevance labels required by Spec 06A; no arm outputs were consulted.",
+    "Results are single-run point estimates unless a later frozen dataset version increases trials."
+  ],
+  "oracle_evidence_selected_before_outputs": true,
+  "schema_version": 1,
+  "status": "frozen",
+  "transaction_fixture_version": "bookings-v1",
+  "trials_per_question": 1
+}

@@ -12,7 +12,7 @@ from kbqa.models import FALLBACK_ANSWER
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-MANIFEST = PROJECT_ROOT / "evals" / "seed-v1.manifest.json"
+MANIFEST = PROJECT_ROOT / "evals" / "manifest.json"
 DOCS = PROJECT_ROOT / "docs"
 TRANSACTIONS = PROJECT_ROOT / "fixtures" / "bookings.json"
 
@@ -20,7 +20,7 @@ TRANSACTIONS = PROJECT_ROOT / "fixtures" / "bookings.json"
 def test_frozen_seed_dataset_validates_offline_and_covers_required_cases():
     dataset = load_frozen_dataset(MANIFEST, DOCS, TRANSACTIONS)
 
-    assert dataset.manifest.dataset_version == "seed-v1"
+    assert dataset.manifest.dataset_version == "seed-v1.1"
     assert dataset.manifest.status == "frozen"
     assert dataset.manifest.oracle_evidence_selected_before_outputs is True
     assert len(dataset.cases) == 6
@@ -50,7 +50,7 @@ def test_frozen_seed_rejects_a_changed_corpus(tmp_path):
         "# Refund Policy\n\nChanged after the seed freeze.\n", encoding="utf-8"
     )
 
-    with pytest.raises(ValueError, match="Corpus fingerprint mismatch"):
+    with pytest.raises(ValueError, match="corpus fingerprint does not match"):
         load_frozen_dataset(MANIFEST, docs, TRANSACTIONS)
 
 
@@ -66,20 +66,31 @@ def test_frozen_seed_rejects_cases_changed_without_versioned_manifest(tmp_path):
     manifest = tmp_path / "manifest.json"
     manifest.write_text(json.dumps(manifest_payload), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="Frozen cases hash mismatch"):
+    with pytest.raises(ValueError, match="do not match the frozen manifest digest"):
         load_frozen_dataset(manifest, DOCS, TRANSACTIONS)
 
 
 def test_frozen_seed_rejects_unresolvable_minimal_evidence(tmp_path):
-    original = (PROJECT_ROOT / "evals" / "cases.jsonl").read_text(encoding="utf-8")
+    # Parse rather than string-replace so the test does not depend on how the
+    # cases file happens to be serialized.
+    records = [
+        json.loads(line)
+        for line in (PROJECT_ROOT / "evals" / "cases.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.strip()
+    ]
+    for record in records:
+        for source in record.get("acceptable_sources", []):
+            if source.get("evidence_text"):
+                source["evidence_text"] = "an annotation that is absent"
+                break
+        else:
+            continue
+        break
     cases = tmp_path / "cases.jsonl"
     cases.write_text(
-        original.replace(
-            '"evidence_text":"7 to 11 business days"',
-            '"evidence_text":"an annotation that is absent"',
-            1,
-        ),
-        encoding="utf-8",
+        "".join(json.dumps(record) + "\n" for record in records), encoding="utf-8"
     )
     manifest_payload = json.loads(MANIFEST.read_text(encoding="utf-8"))
     manifest_payload["cases_file"] = cases.name
@@ -87,7 +98,7 @@ def test_frozen_seed_rejects_unresolvable_minimal_evidence(tmp_path):
     manifest = tmp_path / "manifest.json"
     manifest.write_text(json.dumps(manifest_payload), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="Evidence text does not resolve"):
+    with pytest.raises(ValueError, match="evidence_text not found in source"):
         load_frozen_dataset(manifest, DOCS, TRANSACTIONS)
 
 

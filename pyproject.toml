@@ -38,6 +38,9 @@ testpaths = ["tests"]
 # Resolve kbqa from this checkout so a shared venv's editable install cannot
 # silently point a git worktree at another tree's source.
 pythonpath = ["src"]
+markers = [
+  "integration: explicitly opted-in tests that call external providers",
+]
 
 [tool.coverage.run]
 branch = true
