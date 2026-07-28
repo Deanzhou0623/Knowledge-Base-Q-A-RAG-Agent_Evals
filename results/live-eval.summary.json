@@ -1,0 +1,1682 @@
+{
+  "arm_category_cells": {
+    "bm25:company_specific": {
+      "failed": 0,
+      "metrics": {
+        "answer_input_tokens": {
+          "count": 2,
+          "mean": 254.5,
+          "variance": 12.25
+        },
+        "answer_output_tokens": {
+          "count": 2,
+          "mean": 39.5,
+          "variance": 0.25
+        },
+        "citation_accuracy": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "correctness": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "embedding_input_tokens": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "estimated_answer_cost_usd": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "estimated_embedding_cost_usd": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "fallback_correct": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "first_relevant_rank": {
+          "count": 2,
+          "mean": 2.0,
+          "variance": 0.0
+        },
+        "generation_ms": {
+          "count": 2,
+          "mean": 1460.7248544925824,
+          "variance": 45896.69755979425
+        },
+        "hit_rate": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "recall_at_3": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "refusal_calibrated": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "retrieval_ms": {
+          "count": 2,
+          "mean": 0.24177052546292543,
+          "variance": 0.018649318227521187
+        },
+        "section_recall_at_3": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "unsupported_claim_rate": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "unsupported_retrieval": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        }
+      },
+      "records": 2,
+      "successful": 2
+    },
+    "bm25:generic_ecommerce": {
+      "failed": 0,
+      "metrics": {
+        "answer_input_tokens": {
+          "count": 1,
+          "mean": 253.0,
+          "variance": 0.0
+        },
+        "answer_output_tokens": {
+          "count": 1,
+          "mean": 28.0,
+          "variance": 0.0
+        },
+        "citation_accuracy": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "correctness": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "embedding_input_tokens": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "estimated_answer_cost_usd": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "estimated_embedding_cost_usd": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "fallback_correct": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "first_relevant_rank": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "generation_ms": {
+          "count": 1,
+          "mean": 1298.4442500164732,
+          "variance": 0.0
+        },
+        "hit_rate": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "recall_at_3": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "refusal_calibrated": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "retrieval_ms": {
+          "count": 1,
+          "mean": 0.29683305183425546,
+          "variance": 0.0
+        },
+        "section_recall_at_3": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "unsupported_claim_rate": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "unsupported_retrieval": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        }
+      },
+      "records": 1,
+      "successful": 1
+    },
+    "bm25:unsupported": {
+      "failed": 0,
+      "metrics": {
+        "answer_input_tokens": {
+          "count": 1,
+          "mean": 247.0,
+          "variance": 0.0
+        },
+        "answer_output_tokens": {
+          "count": 1,
+          "mean": 12.0,
+          "variance": 0.0
+        },
+        "citation_accuracy": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "correctness": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "embedding_input_tokens": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "estimated_answer_cost_usd": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "estimated_embedding_cost_usd": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "fallback_correct": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "first_relevant_rank": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "generation_ms": {
+          "count": 1,
+          "mean": 1203.0347919790074,
+          "variance": 0.0
+        },
+        "hit_rate": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "refusal_calibrated": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "retrieval_ms": {
+          "count": 1,
+          "mean": 0.41879102354869246,
+          "variance": 0.0
+        },
+        "section_recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "unsupported_claim_rate": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "unsupported_retrieval": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        }
+      },
+      "records": 1,
+      "successful": 1
+    },
+    "bm25:user_specific": {
+      "failed": 0,
+      "metrics": {
+        "answer_input_tokens": {
+          "count": 2,
+          "mean": 345.5,
+          "variance": 4556.25
+        },
+        "answer_output_tokens": {
+          "count": 2,
+          "mean": 85.0,
+          "variance": 3969.0
+        },
+        "citation_accuracy": {
+          "count": 2,
+          "mean": 0.75,
+          "variance": 0.0625
+        },
+        "correctness": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "embedding_input_tokens": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "estimated_answer_cost_usd": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "estimated_embedding_cost_usd": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "fallback_correct": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "first_relevant_rank": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "generation_ms": {
+          "count": 2,
+          "mean": 3020.2803334977943,
+          "variance": 941537.1543673398
+        },
+        "hit_rate": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "recall_at_3": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "refusal_calibrated": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "retrieval_ms": {
+          "count": 2,
+          "mean": 0.6312085024546832,
+          "variance": 0.02830789620357681
+        },
+        "section_recall_at_3": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "unsupported_claim_rate": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "unsupported_retrieval": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        }
+      },
+      "records": 2,
+      "successful": 2
+    },
+    "llm_only:company_specific": {
+      "failed": 0,
+      "metrics": {
+        "answer_input_tokens": {
+          "count": 2,
+          "mean": 67.0,
+          "variance": 1.0
+        },
+        "answer_output_tokens": {
+          "count": 2,
+          "mean": 114.0,
+          "variance": 16.0
+        },
+        "citation_accuracy": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "correctness": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "embedding_input_tokens": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "estimated_answer_cost_usd": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "estimated_embedding_cost_usd": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "fallback_correct": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "first_relevant_rank": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "generation_ms": {
+          "count": 2,
+          "mean": 3904.1011670196895,
+          "variance": 5096.78196542928
+        },
+        "hit_rate": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "refusal_calibrated": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "retrieval_ms": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "section_recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "unsupported_claim_rate": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "unsupported_retrieval": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        }
+      },
+      "records": 2,
+      "successful": 2
+    },
+    "llm_only:generic_ecommerce": {
+      "failed": 0,
+      "metrics": {
+        "answer_input_tokens": {
+          "count": 1,
+          "mean": 63.0,
+          "variance": 0.0
+        },
+        "answer_output_tokens": {
+          "count": 1,
+          "mean": 125.0,
+          "variance": 0.0
+        },
+        "citation_accuracy": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "correctness": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "embedding_input_tokens": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "estimated_answer_cost_usd": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "estimated_embedding_cost_usd": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "fallback_correct": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "first_relevant_rank": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "generation_ms": {
+          "count": 1,
+          "mean": 3820.335208030883,
+          "variance": 0.0
+        },
+        "hit_rate": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "refusal_calibrated": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "retrieval_ms": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "section_recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "unsupported_claim_rate": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "unsupported_retrieval": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        }
+      },
+      "records": 1,
+      "successful": 1
+    },
+    "llm_only:unsupported": {
+      "failed": 0,
+      "metrics": {
+        "answer_input_tokens": {
+          "count": 1,
+          "mean": 65.0,
+          "variance": 0.0
+        },
+        "answer_output_tokens": {
+          "count": 1,
+          "mean": 49.0,
+          "variance": 0.0
+        },
+        "citation_accuracy": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "correctness": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "embedding_input_tokens": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "estimated_answer_cost_usd": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "estimated_embedding_cost_usd": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "fallback_correct": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "first_relevant_rank": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "generation_ms": {
+          "count": 1,
+          "mean": 1930.9950830065645,
+          "variance": 0.0
+        },
+        "hit_rate": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "refusal_calibrated": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "retrieval_ms": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "section_recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "unsupported_claim_rate": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "unsupported_retrieval": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        }
+      },
+      "records": 1,
+      "successful": 1
+    },
+    "llm_only:user_specific": {
+      "failed": 0,
+      "metrics": {
+        "answer_input_tokens": {
+          "count": 2,
+          "mean": 70.0,
+          "variance": 4.0
+        },
+        "answer_output_tokens": {
+          "count": 2,
+          "mean": 55.0,
+          "variance": 900.0
+        },
+        "citation_accuracy": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "correctness": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "embedding_input_tokens": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "estimated_answer_cost_usd": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "estimated_embedding_cost_usd": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "fallback_correct": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "first_relevant_rank": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "generation_ms": {
+          "count": 2,
+          "mean": 2388.0496455240063,
+          "variance": 921473.8843167501
+        },
+        "hit_rate": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "refusal_calibrated": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "retrieval_ms": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "section_recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "unsupported_claim_rate": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "unsupported_retrieval": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        }
+      },
+      "records": 2,
+      "successful": 2
+    },
+    "oracle:company_specific": {
+      "failed": 0,
+      "metrics": {
+        "answer_input_tokens": {
+          "count": 2,
+          "mean": 140.0,
+          "variance": 1.0
+        },
+        "answer_output_tokens": {
+          "count": 2,
+          "mean": 28.0,
+          "variance": 1.0
+        },
+        "citation_accuracy": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "correctness": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "embedding_input_tokens": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "estimated_answer_cost_usd": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "estimated_embedding_cost_usd": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "fallback_correct": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "first_relevant_rank": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "generation_ms": {
+          "count": 2,
+          "mean": 1621.2468540179543,
+          "variance": 9810.824047402471
+        },
+        "hit_rate": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "refusal_calibrated": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "retrieval_ms": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "section_recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "unsupported_claim_rate": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "unsupported_retrieval": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        }
+      },
+      "records": 2,
+      "successful": 2
+    },
+    "oracle:generic_ecommerce": {
+      "failed": 0,
+      "metrics": {
+        "answer_input_tokens": {
+          "count": 1,
+          "mean": 138.0,
+          "variance": 0.0
+        },
+        "answer_output_tokens": {
+          "count": 1,
+          "mean": 28.0,
+          "variance": 0.0
+        },
+        "citation_accuracy": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "correctness": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "embedding_input_tokens": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "estimated_answer_cost_usd": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "estimated_embedding_cost_usd": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "fallback_correct": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "first_relevant_rank": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "generation_ms": {
+          "count": 1,
+          "mean": 2129.039791005198,
+          "variance": 0.0
+        },
+        "hit_rate": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "refusal_calibrated": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "retrieval_ms": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "section_recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "unsupported_claim_rate": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "unsupported_retrieval": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        }
+      },
+      "records": 1,
+      "successful": 1
+    },
+    "oracle:user_specific": {
+      "failed": 0,
+      "metrics": {
+        "answer_input_tokens": {
+          "count": 2,
+          "mean": 167.5,
+          "variance": 812.25
+        },
+        "answer_output_tokens": {
+          "count": 2,
+          "mean": 134.0,
+          "variance": 12544.0
+        },
+        "citation_accuracy": {
+          "count": 2,
+          "mean": 0.5,
+          "variance": 0.25
+        },
+        "correctness": {
+          "count": 2,
+          "mean": 0.5,
+          "variance": 0.25
+        },
+        "embedding_input_tokens": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "estimated_answer_cost_usd": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "estimated_embedding_cost_usd": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "fallback_correct": {
+          "count": 2,
+          "mean": 0.5,
+          "variance": 0.25
+        },
+        "first_relevant_rank": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "generation_ms": {
+          "count": 2,
+          "mean": 3508.4295209962875,
+          "variance": 5485021.088693212
+        },
+        "hit_rate": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "refusal_calibrated": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "retrieval_ms": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "section_recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "unsupported_claim_rate": {
+          "count": 2,
+          "mean": 0.5,
+          "variance": 0.25
+        },
+        "unsupported_retrieval": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        }
+      },
+      "records": 2,
+      "successful": 2
+    },
+    "vector:company_specific": {
+      "failed": 0,
+      "metrics": {
+        "answer_input_tokens": {
+          "count": 2,
+          "mean": 256.0,
+          "variance": 1.0
+        },
+        "answer_output_tokens": {
+          "count": 2,
+          "mean": 39.0,
+          "variance": 0.0
+        },
+        "citation_accuracy": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "correctness": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "embedding_input_tokens": {
+          "count": 2,
+          "mean": 10.0,
+          "variance": 1.0
+        },
+        "estimated_answer_cost_usd": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "estimated_embedding_cost_usd": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "fallback_correct": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "first_relevant_rank": {
+          "count": 2,
+          "mean": 1.5,
+          "variance": 0.25
+        },
+        "generation_ms": {
+          "count": 2,
+          "mean": 1928.239978995407,
+          "variance": 227022.96618087712
+        },
+        "hit_rate": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "recall_at_3": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "refusal_calibrated": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "retrieval_ms": {
+          "count": 2,
+          "mean": 475.63291649566963,
+          "variance": 25232.806081272993
+        },
+        "section_recall_at_3": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "unsupported_claim_rate": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "unsupported_retrieval": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        }
+      },
+      "records": 2,
+      "successful": 2
+    },
+    "vector:generic_ecommerce": {
+      "failed": 0,
+      "metrics": {
+        "answer_input_tokens": {
+          "count": 1,
+          "mean": 252.0,
+          "variance": 0.0
+        },
+        "answer_output_tokens": {
+          "count": 1,
+          "mean": 47.0,
+          "variance": 0.0
+        },
+        "citation_accuracy": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "correctness": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "embedding_input_tokens": {
+          "count": 1,
+          "mean": 6.0,
+          "variance": 0.0
+        },
+        "estimated_answer_cost_usd": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "estimated_embedding_cost_usd": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "fallback_correct": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "first_relevant_rank": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "generation_ms": {
+          "count": 1,
+          "mean": 1578.8592079770751,
+          "variance": 0.0
+        },
+        "hit_rate": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "recall_at_3": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "refusal_calibrated": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "retrieval_ms": {
+          "count": 1,
+          "mean": 828.5510840360075,
+          "variance": 0.0
+        },
+        "section_recall_at_3": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "unsupported_claim_rate": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "unsupported_retrieval": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        }
+      },
+      "records": 1,
+      "successful": 1
+    },
+    "vector:unsupported": {
+      "failed": 0,
+      "metrics": {
+        "answer_input_tokens": {
+          "count": 1,
+          "mean": 266.0,
+          "variance": 0.0
+        },
+        "answer_output_tokens": {
+          "count": 1,
+          "mean": 27.0,
+          "variance": 0.0
+        },
+        "citation_accuracy": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "correctness": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "embedding_input_tokens": {
+          "count": 1,
+          "mean": 8.0,
+          "variance": 0.0
+        },
+        "estimated_answer_cost_usd": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "estimated_embedding_cost_usd": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "fallback_correct": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "first_relevant_rank": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "generation_ms": {
+          "count": 1,
+          "mean": 1538.0229590227827,
+          "variance": 0.0
+        },
+        "hit_rate": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "refusal_calibrated": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "retrieval_ms": {
+          "count": 1,
+          "mean": 243.7237499980256,
+          "variance": 0.0
+        },
+        "section_recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "unsupported_claim_rate": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "unsupported_retrieval": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        }
+      },
+      "records": 1,
+      "successful": 1
+    },
+    "vector:user_specific": {
+      "failed": 0,
+      "metrics": {
+        "answer_input_tokens": {
+          "count": 2,
+          "mean": 349.5,
+          "variance": 5112.25
+        },
+        "answer_output_tokens": {
+          "count": 2,
+          "mean": 60.0,
+          "variance": 1296.0
+        },
+        "citation_accuracy": {
+          "count": 2,
+          "mean": 0.75,
+          "variance": 0.0625
+        },
+        "correctness": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "embedding_input_tokens": {
+          "count": 2,
+          "mean": 7.5,
+          "variance": 56.25
+        },
+        "estimated_answer_cost_usd": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "estimated_embedding_cost_usd": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "fallback_correct": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "first_relevant_rank": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "generation_ms": {
+          "count": 2,
+          "mean": 1540.3087709855754,
+          "variance": 236559.8498006144
+        },
+        "hit_rate": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "recall_at_3": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "refusal_calibrated": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "retrieval_ms": {
+          "count": 2,
+          "mean": 113.66554148844443,
+          "variance": 12856.838431331968
+        },
+        "section_recall_at_3": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "unsupported_claim_rate": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "unsupported_retrieval": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        }
+      },
+      "records": 2,
+      "successful": 2
+    }
+  },
+  "corpus_fingerprint": "0c16dee61a6dcb833fe5dda8ac0ebeba2c99a55753753fce62aeceafaf3d3978",
+  "corpus_tier": "primary_controlled",
+  "dataset_version": "seed-v1.1",
+  "estimate_type": "single_run_point_estimate",
+  "failure_examples": [
+    {
+      "arm": "bm25",
+      "error": null,
+      "failure_labels": [
+        "oracle_annotation_model_prompt_review"
+      ],
+      "question_id": "booking-002",
+      "status": "ok"
+    },
+    {
+      "arm": "vector",
+      "error": null,
+      "failure_labels": [
+        "oracle_annotation_model_prompt_review"
+      ],
+      "question_id": "booking-002",
+      "status": "ok"
+    },
+    {
+      "arm": "bm25",
+      "error": null,
+      "failure_labels": [
+        "keyword_false_positive"
+      ],
+      "question_id": "unsupported-001",
+      "status": "ok"
+    },
+    {
+      "arm": "vector",
+      "error": null,
+      "failure_labels": [
+        "semantic_false_positive"
+      ],
+      "question_id": "unsupported-001",
+      "status": "ok"
+    }
+  ],
+  "improvement_excluded_categories": [
+    "unsupported",
+    "user_specific"
+  ],
+  "improvement_over_llm_only": {
+    "bm25:company_specific:correctness": 1.0,
+    "bm25:company_specific:fallback_correct": 0.0,
+    "bm25:company_specific:unsupported_claim_rate": -1.0,
+    "bm25:generic_ecommerce:correctness": 0.0,
+    "bm25:generic_ecommerce:fallback_correct": 0.0,
+    "bm25:generic_ecommerce:unsupported_claim_rate": 0.0,
+    "vector:company_specific:correctness": 1.0,
+    "vector:company_specific:fallback_correct": 0.0,
+    "vector:company_specific:unsupported_claim_rate": -1.0,
+    "vector:generic_ecommerce:correctness": 0.0,
+    "vector:generic_ecommerce:fallback_correct": 0.0,
+    "vector:generic_ecommerce:unsupported_claim_rate": 0.0
+  },
+  "index_runs": {
+    "bm25": {
+      "configuration": {
+        "backend": "bm25",
+        "index_path": ".kb/index.json",
+        "schema_version": 3,
+        "tokenizer": "unicode_word_lowercase-v1"
+      },
+      "embedding_token_usage": null,
+      "error": null,
+      "estimated_embedding_cost_usd": null,
+      "index_ms": 2.143083023838699
+    },
+    "vector": {
+      "configuration": {
+        "backend": "vector",
+        "chunk_words": 160,
+        "dimension": 1536,
+        "distance_metric": "inner_product",
+        "embedding_model": "text-embedding-3-small",
+        "index_path": ".kb/faiss_index",
+        "index_type": "IndexFlatIP",
+        "normalization": "l2",
+        "overlap": 30,
+        "schema_version": 2
+      },
+      "embedding_token_usage": {
+        "input_tokens": 453,
+        "output_tokens": 0,
+        "total_tokens": 453
+      },
+      "error": null,
+      "estimated_embedding_cost_usd": 0.0,
+      "index_ms": 2095.8776669576764
+    }
+  },
+  "minimum_questions_per_category": 1,
+  "paraphrase_robustness": {
+    "bm25:refund-timeline": {
+      "consistency": 1.0,
+      "hit_rate": 1.0,
+      "members": 2
+    },
+    "vector:refund-timeline": {
+      "consistency": 1.0,
+      "hit_rate": 1.0,
+      "members": 2
+    }
+  },
+  "rag_control_confound": "RAG-minus-control compares a strict grounded prompt plus retrieved context against a closed-book prompt; it is not a context-only ablation.",
+  "run_id": "61f28d3f-7134-422d-bbde-718344a265d6",
+  "trials_per_question": 1,
+  "user_specific_rag_capability": {
+    "transaction_only": {
+      "failed": 0,
+      "metrics": {
+        "answer_input_tokens": {
+          "count": 2,
+          "mean": 278.0,
+          "variance": 0.0
+        },
+        "answer_output_tokens": {
+          "count": 2,
+          "mean": 23.0,
+          "variance": 1.0
+        },
+        "citation_accuracy": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "correctness": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "embedding_input_tokens": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "estimated_answer_cost_usd": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "estimated_embedding_cost_usd": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "fallback_correct": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "first_relevant_rank": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "generation_ms": {
+          "count": 2,
+          "mean": 1551.9432714791037,
+          "variance": 248012.65284022543
+        },
+        "hit_rate": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "refusal_calibrated": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "retrieval_ms": {
+          "count": 2,
+          "mean": 0.3702504909597337,
+          "variance": 0.008594867027290898
+        },
+        "section_recall_at_3": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "unsupported_claim_rate": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "unsupported_retrieval": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        }
+      },
+      "records": 2,
+      "successful": 2
+    },
+    "transaction_plus_document": {
+      "failed": 0,
+      "metrics": {
+        "answer_input_tokens": {
+          "count": 2,
+          "mean": 417.0,
+          "variance": 16.0
+        },
+        "answer_output_tokens": {
+          "count": 2,
+          "mean": 122.0,
+          "variance": 676.0
+        },
+        "citation_accuracy": {
+          "count": 2,
+          "mean": 0.5,
+          "variance": 0.0
+        },
+        "correctness": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "embedding_input_tokens": {
+          "count": 1,
+          "mean": 15.0,
+          "variance": 0.0
+        },
+        "estimated_answer_cost_usd": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "estimated_embedding_cost_usd": {
+          "count": 1,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "fallback_correct": {
+          "count": 2,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "first_relevant_rank": {
+          "count": 1,
+          "mean": 1.0,
+          "variance": 0.0
+        },
+        "generation_ms": {
+          "count": 2,
+          "mean": 3008.645833004266,
+          "variance": 964251.0878731735
+        },
+        "hit_rate": {
+          "count": 2,
+          "mean": 0.5,
+          "variance": 0.25
+        },
+        "recall_at_3": {
+          "count": 2,
+          "mean": 0.5,
+          "variance": 0.25
+        },
+        "refusal_calibrated": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        },
+        "retrieval_ms": {
+          "count": 2,
+          "mean": 113.92649949993938,
+          "variance": 12797.727516660254
+        },
+        "section_recall_at_3": {
+          "count": 2,
+          "mean": 0.5,
+          "variance": 0.25
+        },
+        "unsupported_claim_rate": {
+          "count": 2,
+          "mean": 0.0,
+          "variance": 0.0
+        },
+        "unsupported_retrieval": {
+          "count": 0,
+          "mean": null,
+          "variance": null
+        }
+      },
+      "records": 2,
+      "successful": 2
+    }
+  }
+}
