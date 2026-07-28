@@ -60,3 +60,20 @@ def test_vector_chunking_rejects_invalid_configuration(
             chunk_words=chunk_words,
             overlap=overlap,
         )
+
+
+def test_vector_chunk_ids_differ_across_chunking_configurations(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    path = docs / "guide.md"
+    path.write_text("# Guide\n" + " ".join(f"w{n}" for n in range(40)), encoding="utf-8")
+    sections = parse_markdown(path, docs)
+
+    coarse = chunk_sections(sections, chunk_words=30, overlap=5)
+    fine = chunk_sections(sections, chunk_words=10, overlap=2)
+
+    # Same section, same ordinal, different text: the IDs must not collide or a
+    # comparison report joining runs on unit ID equates unlike chunks.
+    assert coarse[0].text != fine[0].text
+    assert coarse[0].id != fine[0].id
+    assert [c.id for c in coarse] == [c.id for c in chunk_sections(sections, 30, 5)]

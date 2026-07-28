@@ -92,7 +92,15 @@ def chunk_sections(
             chunks.append(
                 section.model_copy(
                     update={
-                        "id": stable_unit_id(section.source_path, section.anchor, str(index)),
+                        # The chunking configuration is part of the chunk
+                        # identity: the same ordinal under a different
+                        # chunk_words/overlap covers different text, and
+                        # evaluation artifacts join runs on this ID.
+                        "id": stable_unit_id(
+                            section.source_path,
+                            section.anchor,
+                            f"{chunk_words}:{overlap}:{index}",
+                        ),
                         "text": " ".join(window),
                         "chunk_index": index,
                     }

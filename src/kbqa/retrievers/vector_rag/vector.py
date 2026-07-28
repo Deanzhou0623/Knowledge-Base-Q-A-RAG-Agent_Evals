@@ -38,6 +38,17 @@ class VectorRetriever:
         self.corpus_fingerprint: str | None = None
         self.files_indexed = 0
 
+    def _remove_superseded_indexes(self, keep: Path) -> None:
+        """Drop FAISS files left by earlier builds.
+
+        Each build writes a content-addressed index and repoints
+        metadata.json; without this the directory grows by one full index
+        per rebuild and no longer shows which artifact is live.
+        """
+        for existing in self.index_path.glob("index-*.faiss"):
+            if existing != keep:
+                existing.unlink(missing_ok=True)
+
     def _clear(self) -> None:
         self.units = []
         self._index = None
@@ -146,6 +157,7 @@ class VectorRetriever:
         finally:
             if temporary_index.exists():
                 temporary_index.unlink()
+        self._remove_superseded_indexes(keep=final_index)
 
         fingerprint = corpus_fingerprint(docs_path)
         created_at = datetime.now(timezone.utc)
