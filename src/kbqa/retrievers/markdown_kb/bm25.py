@@ -1,7 +1,7 @@
 import json
 import re
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from rank_bm25 import BM25Okapi
@@ -20,13 +20,25 @@ def tokenize(text: str) -> list[str]:
     return TOKEN_RE.findall(text.lower())
 
 
+def _file_order_key(source_path: str) -> tuple[str, ...]:
+    """Order key matching load_sections' sorted(Path) discovery order.
+
+    Plain string comparison disagrees with path-component comparison
+    whenever a filename and a sibling directory share a prefix
+    ("platform-notes.md" vs "platform/b.md"), which previously made a
+    freshly written index fail its own load-time order check.
+    """
+    return PurePosixPath(source_path).parts
+
+
 class BM25Retriever:
     backend = "bm25"
-    schema_version = 2
+    schema_version = 3
 
     def __init__(self, index_path: Path) -> None:
         self.index_path = index_path
         self.units: list[DocumentUnit] = []
+        self._retrievable: list[int] = []
         self._index: BM25Okapi | None = None
         self.loaded = False
         self.corpus_fingerprint: str | None = None
@@ -46,8 +58,15 @@ class BM25Retriever:
         }
 
     @staticmethod
-    def _tokenized_corpus(units: list[DocumentUnit]) -> list[list[str]]:
-        return [tokenize(f"{unit.heading} {unit.text}") for unit in units]
+    def _retrievable_indexes(units: list[DocumentUnit]) -> list[int]:
+        return [index for index, unit in enumerate(units) if unit.text.strip()]
+
+    @classmethod
+    def _tokenized_corpus(cls, units: list[DocumentUnit]) -> list[list[str]]:
+        return [
+            tokenize(f"{units[index].heading} {units[index].text}")
+            for index in cls._retrievable_indexes(units)
+        ]
 
     @staticmethod
     def _make_index(tokenized_corpus: list[list[str]]) -> BM25Okapi:
@@ -55,6 +74,7 @@ class BM25Retriever:
 
     def _clear(self) -> None:
         self.units = []
+        self._retrievable = []
         self._index = None
         self.loaded = False
         self.corpus_fingerprint = None
@@ -64,6 +84,7 @@ class BM25Retriever:
         self, units: list[DocumentUnit], tokenized_corpus: list[list[str]]
     ) -> None:
         self.units = units
+        self._retrievable = self._retrievable_indexes(units)
         self._index = self._make_index(tokenized_corpus) if tokenized_corpus else None
         self.loaded = bool(units)
 
@@ -87,6 +108,7 @@ class BM25Retriever:
         }
         atomic_write_json(self.index_path, payload)
         self.units = units
+        self._retrievable = self._retrievable_indexes(units)
         self._index = index
         self.loaded = True
         self.corpus_fingerprint = fingerprint
@@ -151,7 +173,7 @@ class BM25Retriever:
             if unit.id in seen_ids:
                 raise ValueError("Index contains duplicate section IDs")
             seen_ids.add(unit.id)
-        if source_paths != sorted(source_paths):
+        if source_paths != sorted(source_paths, key=_file_order_key):
             raise ValueError("Index sections are not in deterministic file order")
         return len(set(source_paths))
 
@@ -207,8 +229,16 @@ class BM25Retriever:
         if not self.loaded or self._index is None:
             raise RuntimeError("BM25 index is not loaded")
         scores = self._index.get_scores(tokenize(query))
-        ranked = sorted(range(len(self.units)), key=lambda i: (-float(scores[i]), self.units[i].id))
+        # scores is aligned with the retrievable subset, not with self.units.
+        ranked = sorted(
+            range(len(self._retrievable)),
+            key=lambda i: (-float(scores[i]), self.units[self._retrievable[i]].id),
+        )
         return [
-            RetrievalResult(**self.units[index].model_dump(), score=float(scores[index]), rank=rank)
-            for rank, index in enumerate(ranked[:k], start=1)
+            RetrievalResult(
+                **self.units[self._retrievable[position]].model_dump(),
+                score=float(scores[position]),
+                rank=rank,
+            )
+            for rank, position in enumerate(ranked[:k], start=1)
         ]

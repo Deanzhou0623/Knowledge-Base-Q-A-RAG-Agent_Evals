@@ -27,7 +27,7 @@ def slugify_heading(heading: str) -> str:
     normalized = "".join(
         character
         for character in normalized
-        if character == "-"
+        if character in {"-", "_"}
         or character.isspace()
         or unicodedata.category(character)[0] in {"L", "M", "N"}
     )

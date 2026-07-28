@@ -34,7 +34,7 @@ def test_bm25_index_is_inspectable_and_rebuild_is_stable(corpus, tmp_path):
     second_summary = retriever.build(corpus)
     second_payload = json.loads(index_path.read_text(encoding="utf-8"))
 
-    assert first_payload["schema_version"] == 2
+    assert first_payload["schema_version"] == 3
     assert first_payload["backend"] == "bm25"
     assert first_payload["configuration"]["tokenizer_version"] == TOKENIZER_VERSION
     assert first_payload["configuration"]["bm25"] == {
@@ -150,3 +150,42 @@ def test_vector_build_search_reload_and_checksum_validation(corpus, tmp_path):
         handle.write(b"tampered")
     rejected = VectorRetriever(index_path, embeddings, chunk_words=20, overlap=5)
     assert rejected.load() is False
+
+
+def test_bm25_index_reloads_when_a_filename_shares_a_directory_prefix(tmp_path):
+    # "platform-notes.md" sorts before "platform/b.md" as a string but after it
+    # as a path, so a string-ordered load check rejected a valid fresh index.
+    docs = tmp_path / "docs"
+    (docs / "platform").mkdir(parents=True)
+    (docs / "platform" / "b.md").write_text("# B\nBody b", encoding="utf-8")
+    (docs / "platform-notes.md").write_text("# Notes\nBody notes", encoding="utf-8")
+    index_path = tmp_path / ".kb" / "index.json"
+
+    BM25Retriever(index_path).build(docs)
+    restarted = BM25Retriever(index_path)
+
+    assert restarted.load() is True
+    assert restarted.search("body", 3)
+
+
+def test_bm25_search_skips_heading_only_sections(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "guide.md").write_text(
+        "# Cancellation Policy\n"
+        "## Cancellation Process\n"
+        "Call support to start a cancellation.\n"
+        "## Cancellation Fees\n"
+        "A cancellation fee applies after the deadline.\n",
+        encoding="utf-8",
+    )
+    retriever = BM25Retriever(tmp_path / ".kb" / "index.json")
+    retriever.build(docs)
+
+    results = retriever.search("cancellation", 3)
+
+    # The empty "Cancellation Policy" parent heading is still indexed for
+    # inspection, but it must not consume a retrieval slot with no content.
+    assert all(result.text.strip() for result in results)
+    assert "guide.md#cancellation-policy" not in {r.citation for r in results}
+    assert any(unit.text == "" for unit in retriever.units)
