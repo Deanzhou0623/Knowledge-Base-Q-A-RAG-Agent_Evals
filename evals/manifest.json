@@ -5,7 +5,7 @@
   "corpus_tier": "primary_controlled",
   "dataset_version": "seed-v1.1",
   "estimate_type": "single_run_point_estimate",
-  "grader_version": "deterministic-v1",
+  "grader_version": "deterministic-v2",
   "minimum_questions_per_category": 1,
   "notes": [
     "Seed cases and gold evidence were authored before comparative arm execution.",

@@ -7,7 +7,7 @@ from kbqa.evals.dataset import EvalCase, GoldSource
 from kbqa.models import FALLBACK_ANSWER, RetrievalResult
 
 
-GRADER_VERSION = "deterministic-v1"
+GRADER_VERSION = "deterministic-v2"
 WHITESPACE_RE = re.compile(r"\s+")
 WORD_RE = re.compile(r"\w+", flags=re.UNICODE)
 STOPWORDS = {
@@ -24,6 +24,20 @@ STOPWORDS = {
     "to",
 }
 FACT_TOKEN_RECALL_THRESHOLD = 0.6
+NEGATIONS = {
+    "no",
+    "not",
+    "never",
+    "cannot",
+    "cant",
+    "dont",
+    "doesnt",
+    "isnt",
+    "arent",
+    "wont",
+    "without",
+}
+SENTENCE_RE = re.compile(r"[.!?\n]+")
 
 
 def normalize_text(value: str) -> str:
@@ -48,10 +62,54 @@ def _content_tokens(value: str) -> set[str]:
     }
 
 
+def _numeric_tokens(value: str) -> set[str]:
+    return {token for token in WORD_RE.findall(normalize_text(value)) if any(c.isdigit() for c in token)}
+
+
+def _negated(value: str) -> bool:
+    return bool({token for token in WORD_RE.findall(normalize_text(value))} & NEGATIONS)
+
+
+def _best_sentence(expected_tokens: set[str], answer: str) -> str:
+    """The answer sentence that overlaps the expected fact most.
+
+    Negation has to be judged against the clause that actually carries the
+    matched tokens; scanning the whole answer would flag any response that
+    happens to contain an unrelated "not" elsewhere.
+    """
+    sentences = [part for part in SENTENCE_RE.split(answer) if part.strip()]
+    if not sentences:
+        return answer
+    return max(
+        sentences,
+        key=lambda sentence: len(expected_tokens & _content_tokens(sentence)),
+    )
+
+
 def _fact_coverage(expected: str, answer: str) -> float:
+    """Deterministic token-overlap proxy for factual correctness.
+
+    Bare content-token recall accepted a wrong number ("3 to 4 business days"
+    against an expected "7 to 11 business days") and a negation of the expected
+    fact, both of which shared most of their tokens with the reference. Numeric
+    agreement and negation agreement are therefore gates, not contributions:
+    failing either means the fact was not stated, whatever the overlap.
+
+    This remains a lexical heuristic. It cannot detect a paraphrase that shares
+    no vocabulary with the reference, and it is not a substitute for a rubric
+    grader on a final benchmark.
+    """
     expected_tokens = _content_tokens(expected)
     if not expected_tokens:
         return float(normalize_text(expected) in normalize_text(answer))
+
+    expected_numbers = _numeric_tokens(expected)
+    if expected_numbers and not expected_numbers <= _numeric_tokens(answer):
+        return 0.0
+
+    if _negated(expected) != _negated(_best_sentence(expected_tokens, answer)):
+        return 0.0
+
     answer_tokens = _content_tokens(answer)
     return len(expected_tokens & answer_tokens) / len(expected_tokens)
 
@@ -132,6 +190,7 @@ def answer_metrics(
     *,
     arm: str = "bm25",
     supplied_citations: Iterable[str] = (),
+    raw_citations: list[str] | None = None,
 ) -> dict[str, Any]:
     normalized_answer = normalize_text(answer)
     fact_coverages = [
@@ -169,8 +228,16 @@ def answer_metrics(
         }
         supplied = {normalize_citation(citation) for citation in supplied_citations}
         normalized_citations = [normalize_citation(citation) for citation in citations]
+        # Grade what the model actually produced. The served citations have
+        # already had anything invalid stripped by the guardrail, so
+        # grading them makes citation_validity unconditionally true.
+        graded_citations = (
+            [normalize_citation(citation) for citation in raw_citations]
+            if raw_citations is not None
+            else normalized_citations
+        )
         citation_validity = all(
-            citation in supplied for citation in normalized_citations
+            citation in supplied for citation in graded_citations
         )
         citation_accuracy = (
             sum(citation in acceptable for citation in normalized_citations)

@@ -16,7 +16,7 @@ from kbqa.io import corpus_fingerprint
 from kbqa.llm import GeneratedAnswer
 from kbqa.models import FALLBACK_ANSWER, RetrievalResult, TokenUsage
 
-from conftest import FakeEmbeddings
+from conftest import FakeEmbeddings, FakeGenerator
 
 
 class ControlledGenerator:
@@ -142,7 +142,7 @@ def _write_dataset(root: Path, *, trials: int = 1) -> tuple[Path, Path, Settings
         ),
         "annotation_blinded": True,
         "corpus_tier": "primary_controlled",
-        "grader_version": "deterministic-v1",
+        "grader_version": "deterministic-v2",
     }
     manifest_path = evals / "manifest.json"
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
@@ -432,3 +432,78 @@ def test_paraphrase_robustness_requires_repeated_group_members():
     assert paraphrase_robustness(records) == {
         "bm25:refund": {"members": 2, "hit_rate": 0.5, "consistency": 0.0}
     }
+
+
+def test_records_report_the_model_that_actually_ran(tmp_path):
+    # Previously every record wrote settings.openai_chat_model, so injecting a
+    # fake still produced records claiming gpt-5.6-sol.
+    cases, manifest, settings = _write_dataset(tmp_path)
+    records = runner.run(
+        cases,
+        tmp_path / "results" / "eval.jsonl",
+        ["llm_only", "bm25", "vector"],
+        manifest=manifest,
+        settings=settings,
+        generator=FakeGenerator(FALLBACK_ANSWER),
+        embeddings=FakeEmbeddings(),
+    )
+
+    assert {record["model"] for record in records} == {"fake-answer-model"}
+    vector = [r for r in records if r["arm"] == "vector"]
+    assert {r["embedding_model"] for r in vector} == {"fake-embeddings-v1"}
+
+
+def test_citation_validity_grades_the_pre_guardrail_generation(tmp_path):
+    # The service replaces a fabricated citation with the exact fallback, so
+    # grading the served citations made citation_validity unconditionally true.
+    cases, manifest, settings = _write_dataset(tmp_path)
+    fabricating = FakeGenerator("Tomorrow. [invented.md#answer]")
+    records = runner.run(
+        cases,
+        tmp_path / "results" / "eval.jsonl",
+        ["llm_only", "bm25", "vector"],
+        manifest=manifest,
+        settings=settings,
+        generator=fabricating,
+        embeddings=FakeEmbeddings(),
+    )
+
+    rag = [r for r in records if r["arm"] in {"bm25", "vector"}]
+    assert rag
+    assert all(r["citation_guardrail_triggered"] for r in rag)
+    assert all(r["answer"] == FALLBACK_ANSWER for r in rag)
+    assert all(r["raw_answer"] == "Tomorrow. [invented.md#answer]" for r in rag)
+    assert all(r["raw_citations"] == ["invented.md#answer"] for r in rag)
+    assert all(r["answer_metrics"]["citation_validity"] is False for r in rag)
+
+
+@pytest.mark.parametrize(
+    ("answer", "expected_coverage"),
+    [
+        ("Approved refunds take 7 to 11 business days.", 1.0),
+        # Wrong number: shares 5 of 7 content tokens, previously scored correct.
+        ("Approved refunds take 3 to 4 business days.", 0.0),
+        # Negation of the expected fact: previously scored a perfect 1.0.
+        ("Approved refunds do not take 7 to 11 business days.", 0.0),
+    ],
+)
+def test_fact_coverage_gates_on_numbers_and_negation(answer, expected_coverage):
+    case = EvalCase.model_validate(
+        {
+            "id": "case-1",
+            "category": "company_specific",
+            "question": "How long do refunds take?",
+            "answerable": True,
+            "expected_facts": ["Approved refunds take 7 to 11 business days."],
+            "acceptable_sources": [
+                {"citation": "policy.md#refunds", "evidence_text": "7 to 11"}
+            ],
+            "oracle_sources": ["policy.md#refunds"],
+        }
+    )
+
+    metrics = answer_metrics(
+        case, answer, ["policy.md#refunds"], supplied_citations=["policy.md#refunds"]
+    )
+
+    assert metrics["fact_coverages"] == [expected_coverage]

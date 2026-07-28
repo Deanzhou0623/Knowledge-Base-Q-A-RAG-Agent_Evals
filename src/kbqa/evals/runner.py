@@ -161,6 +161,9 @@ def _empty_record(
     settings: Settings,
     concurrency: int,
     retries: int,
+    cold_start: bool,
+    answer_model: str,
+    embedding_model: str,
 ) -> dict[str, Any]:
     return {
         "run_id": run_id,
@@ -178,8 +181,8 @@ def _empty_record(
         "status": "pending",
         "error": None,
         "attempts": 0,
-        "cold_start": False,
-        "execution_state": "warm_index",
+        "cold_start": cold_start,
+        "execution_state": "cold_index" if cold_start else "warm_index",
         "concurrency": concurrency,
         "configured_retries": retries,
         "answerable": case.answerable,
@@ -190,6 +193,9 @@ def _empty_record(
         "oracle_sources": case.oracle_sources,
         "answer": None,
         "citations": None,
+        "raw_answer": None,
+        "raw_citations": None,
+        "citation_guardrail_triggered": None,
         "retrieved": None,
         "structured_context": None,
         "retrieval_metrics": None,
@@ -219,10 +225,10 @@ def _empty_record(
                 settings.embedding_usd_per_million_tokens
             ),
         },
-        "model": settings.openai_chat_model,
-        "embedding_model": (
-            settings.openai_embedding_model if arm == "vector" else None
-        ),
+        # Reported by the objects that ran, not by configuration, so a
+        # record can never claim a model that was never invoked.
+        "model": answer_model,
+        "embedding_model": embedding_model if arm == "vector" else None,
         "prompt_version": (
             CONTROL_PROMPT_VERSION if arm == "llm_only" else PROMPT_VERSION
         ),
@@ -258,6 +264,7 @@ def run_case(
     run_id: str,
     index_metadata: dict[str, dict[str, Any]],
     embeddings: Any,
+    cold_start: bool = False,
     concurrency: int,
     retries: int,
 ) -> dict[str, Any]:
@@ -271,6 +278,9 @@ def run_case(
         settings=settings,
         concurrency=concurrency,
         retries=retries,
+        cold_start=cold_start,
+        answer_model=generator.model,
+        embedding_model=getattr(embeddings, "model", None),
     )
     if arm in index_metadata:
         record.update(index_metadata[arm])
@@ -289,6 +299,9 @@ def run_case(
                 supplied_citations: set[str] = set()
                 retrieved = None
                 structured = None
+                raw_answer = answer
+                raw_citations = list(citations)
+                guardrail_triggered = False
             elif arm == "oracle":
                 retrieved, structured = _oracle_context(
                     case, settings, transaction_store
@@ -304,12 +317,16 @@ def run_case(
                 answer = generation.text.strip()
                 citations = extract_citations(answer)
                 supplied_citations = set(case.oracle_sources)
+                raw_answer = answer
+                raw_citations = list(citations)
+                guardrail_triggered = False
                 if answer != FALLBACK_ANSWER and (
                     not citations
                     or any(citation not in supplied_citations for citation in citations)
                 ):
                     answer = FALLBACK_ANSWER
                     citations = []
+                    guardrail_triggered = True
             else:
                 if service is None:
                     raise RuntimeError(
@@ -354,10 +371,16 @@ def run_case(
                 supplied_citations = set(response.sources)
                 record["retrieval_ms"] = response.retrieval_ms
                 record["generation_ms"] = response.generation_ms
+                raw_answer = response.raw_answer
+                raw_citations = list(response.raw_citations)
+                guardrail_triggered = response.citation_guardrail_triggered
                 generation = type("Generation", (), {"token_usage": response.token_usage})()
 
             record["answer"] = answer
             record["citations"] = citations
+            record["raw_answer"] = raw_answer
+            record["raw_citations"] = raw_citations
+            record["citation_guardrail_triggered"] = guardrail_triggered
             record["retrieved"] = (
                 None
                 if retrieved is None
@@ -377,6 +400,7 @@ def run_case(
                 citations,
                 arm=arm,
                 supplied_citations=supplied_citations,
+                raw_citations=raw_citations,
             )
             usage = generation.token_usage
             record["answer_token_usage"] = usage.model_dump()
@@ -509,6 +533,22 @@ def run(
         api_key=active_settings.openai_api_key,
     )
 
+    # Controlled inputs must be asserted, not assumed. Records now carry the
+    # model reported by the objects that actually ran, so an injected fake
+    # can never be recorded as gpt-5.6-sol. A live run must additionally
+    # match the configured models exactly.
+    if allow_live and answer_generator.model != active_settings.openai_chat_model:
+        raise ValueError(
+            "Answer generator model does not match the configured answer model: "
+            f"{answer_generator.model!r} != {active_settings.openai_chat_model!r}"
+        )
+    if allow_live and embedding_provider.model != active_settings.openai_embedding_model:
+        raise ValueError(
+            "Embedding provider model does not match the configured embedding "
+            f"model: {embedding_provider.model!r} != "
+            f"{active_settings.openai_embedding_model!r}"
+        )
+
     services: dict[str, Any] = {}
     index_metadata: dict[str, dict[str, Any]] = {}
     fingerprints: set[str] = set()
@@ -565,6 +605,17 @@ def run(
             }
     if len(fingerprints) > 1:
         raise ValueError("BM25 and Vector indexes do not share a corpus fingerprint")
+    built = [service for service in services.values() if service is not None]
+    if len({service.top_k for service in built}) > 1:
+        raise ValueError("RAG arms do not share the same K")
+    for service in built:
+        if service.top_k != active_settings.top_k:
+            raise ValueError(
+                f"Service K {service.top_k} does not match the configured "
+                f"K {active_settings.top_k}"
+            )
+        if service.generator.model != answer_generator.model:
+            raise ValueError("A RAG service is using a different answer model")
 
     transaction_store = TransactionStore(
         active_settings.transaction_fixture_path
@@ -585,9 +636,10 @@ def run(
             embeddings=embedding_provider,
             concurrency=concurrency,
             retries=retries,
+            cold_start=(trial == 1 and index == 0),
         )
         for trial in range(1, trial_count + 1)
-        for case in loaded.cases
+        for index, case in enumerate(loaded.cases)
         for arm in selected
         if arm != "oracle" or case.answerable
     ]

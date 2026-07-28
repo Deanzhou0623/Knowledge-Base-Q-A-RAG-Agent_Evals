@@ -13,4 +13,4 @@ index:
 	curl -X POST http://127.0.0.1:8000/index
 
 eval:
-	python3 -m kbqa.evals.runner --dataset evals/cases.jsonl --output results/eval.jsonl
+	python3 -m kbqa.evals.runner --live --dataset evals/cases.jsonl --output results/eval.jsonl

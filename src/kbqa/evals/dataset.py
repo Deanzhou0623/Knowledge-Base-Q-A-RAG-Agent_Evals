@@ -147,7 +147,7 @@ class DatasetManifest(BaseModel):
     estimate_type: Literal["single_run_point_estimate", "repeated_trials"]
     annotation_blinded: bool
     corpus_tier: Literal["primary_controlled", "secondary_real_world"]
-    grader_version: str = "deterministic-v1"
+    grader_version: str = "deterministic-v2"
     notes: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")

@@ -90,9 +90,13 @@ class QAService:
         if structured is not None:
             allowed.update(structured.references)
         citations = extract_citations(answer)
+        raw_answer = answer
+        raw_citations = list(citations)
+        guardrail_triggered = False
         if answer != FALLBACK_ANSWER and (not citations or any(c not in allowed for c in citations)):
             answer = FALLBACK_ANSWER
             citations = []
+            guardrail_triggered = True
 
         return ChatResponse(
             answer=answer,
@@ -106,4 +110,7 @@ class QAService:
             model=self.generator.model,
             prompt_version=PROMPT_VERSION,
             token_usage=generation.token_usage,
+            raw_answer=raw_answer,
+            raw_citations=raw_citations,
+            citation_guardrail_triggered=guardrail_triggered,
         )
