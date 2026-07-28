@@ -1,4 +1,5 @@
 import json
+from types import SimpleNamespace
 from datetime import date
 from pathlib import Path
 
@@ -7,6 +8,7 @@ import pytest
 from kbqa.config import Settings
 from kbqa.evals import runner
 from kbqa.evals.dataset import EvalCase, load_cases, validate_dataset
+from kbqa.evals.rubric import OpenAIRubricGrader, parse_rubric_reply
 from kbqa.evals.metrics import (
     answer_metrics,
     paraphrase_robustness,
@@ -515,3 +517,99 @@ def test_fact_coverage_gates_on_numbers_and_negation(answer, expected_coverage):
     )
 
     assert metrics["fact_coverages"] == [expected_coverage]
+
+
+def test_offset_only_gold_outside_oracle_is_resolved_and_scored(tmp_path):
+    # An acceptable-but-not-oracle source specified by offsets kept
+    # evidence_text None, so _evidence_hit could never match it and recall was
+    # capped below 1.0 for both RAG arms regardless of what they retrieved.
+    cases_path, manifest_path, settings = _write_dataset(tmp_path)
+    records = [
+        json.loads(line) for line in cases_path.read_text().splitlines() if line.strip()
+    ]
+    for record in records:
+        if record["id"] == "company":
+            record["acceptable_sources"].append(
+                {
+                    "citation": "policy.md#chargebacks",
+                    "start_offset": 0,
+                    "end_offset": 12,
+                }
+            )
+    cases_path.write_text(
+        "".join(json.dumps(record) + "\n" for record in records), encoding="utf-8"
+    )
+    manifest = json.loads(manifest_path.read_text())
+    manifest["cases_sha256"] = sha256_file(cases_path)
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    dataset = validate_dataset(
+        cases_path,
+        manifest_path,
+        docs_path=settings.docs_path,
+        transaction_fixture_path=settings.transaction_fixture_path,
+    )
+
+    case = next(c for c in dataset.cases if c.id == "company")
+    extra = next(
+        s for s in case.acceptable_sources if s.citation == "policy.md#chargebacks"
+    )
+    # Backfilled from the offsets, so retrieval scoring can now match it.
+    assert extra.evidence_text == "A chargeback"
+
+
+def test_rubric_reply_parsing_never_credits_a_malformed_verdict():
+    assert parse_rubric_reply("SUPPORTED\nStates 7 to 11 days.").verdict == "supported"
+    assert parse_rubric_reply("CONTRADICTED\nSays 3 days.").verdict == "contradicted"
+    assert parse_rubric_reply("MISSING\nSilent on timing.").verdict == "missing"
+    # A malformed or empty grader reply must not be scored as correct.
+    for reply in ["", "   ", "maybe?", "I think it is fine"]:
+        verdict = parse_rubric_reply(reply)
+        assert verdict.verdict == "missing"
+        assert verdict.score == 0.0
+        assert verdict.supported is False
+
+
+def test_openai_rubric_grader_is_pinned_and_records_its_identity():
+    class FakeResponses:
+        def __init__(self):
+            self.calls = []
+
+        def create(self, **kwargs):
+            self.calls.append(kwargs)
+            return SimpleNamespace(output_text="SUPPORTED\nStates the refund window.")
+
+    responses = FakeResponses()
+    grader = OpenAIRubricGrader(client=SimpleNamespace(responses=responses))
+
+    verdict = grader.grade_fact("How long?", "Refunds take 7 to 11 days.", "7 to 11 days.")
+
+    assert verdict.supported is True
+    assert grader.identity.model == "gpt-5.6-sol"
+    assert grader.identity.prompt_version == "rubric-v1"
+    assert responses.calls[0]["model"] == "gpt-5.6-sol"
+
+    with pytest.raises(ValueError, match="gpt-5.6-sol"):
+        OpenAIRubricGrader(model="another-model")
+
+
+def test_records_carry_the_identity_of_the_grader_that_produced_them(tmp_path):
+    cases_path, manifest_path, settings = _write_dataset(tmp_path)
+    records = runner.run(
+        cases_path,
+        tmp_path / "results" / "eval.jsonl",
+        ["llm_only", "bm25", "vector"],
+        manifest=manifest_path,
+        settings=settings,
+        generator=ControlledGenerator(),
+        embeddings=FakeEmbeddings(),
+    )
+
+    graded = [r for r in records if r["answer_metrics"]["expected_facts"]]
+    assert graded
+    for record in graded:
+        metrics = record["answer_metrics"]
+        assert metrics["grader_name"] == "lexical"
+        assert metrics["grader_version"] == "deterministic-v2"
+        assert len(metrics["fact_verdicts"]) == metrics["expected_facts"]
+        assert all(v["verdict"] for v in metrics["fact_verdicts"])

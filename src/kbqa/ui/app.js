@@ -34,21 +34,28 @@ export function createApiClient(fetchImpl = globalThis.fetch) {
     }
   };
 
+  const withBackend = (path, backend) =>
+    backend ? `${path}?backend=${encodeURIComponent(backend)}` : path;
+
   return {
-    health: () => request("/health"),
-    rebuild: () => request("/index", { method: "POST" }),
-    chat: (query) => request("/chat", {
+    health: (backend) => request(withBackend("/health", backend)),
+    rebuild: (backend) => request(withBackend("/index", backend), { method: "POST" }),
+    chat: (query, backend) => request("/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query }),
+      // backend is omitted unless chosen, so the default request body is
+      // unchanged and identical for both backends.
+      body: JSON.stringify(backend ? { query, backend } : { query }),
     }),
   };
 }
 
 export function createController(api, view) {
+  let selectedBackend = null;
+
   const refreshHealth = async () => {
     try {
-      const health = await api.health();
+      const health = await api.health(selectedBackend);
       view.showHealth(health);
       view.clearError();
       return health;
@@ -62,7 +69,7 @@ export function createController(api, view) {
     view.setIndexing(true);
     view.clearError();
     try {
-      const summary = await api.rebuild();
+      const summary = await api.rebuild(selectedBackend);
       view.showIndexSummary(summary);
       await refreshHealth();
       return summary;
@@ -89,7 +96,7 @@ export function createController(api, view) {
     // question, so clear it before the request rather than only on success.
     view.clearAnswer();
     try {
-      const response = await api.chat(normalized);
+      const response = await api.chat(normalized, selectedBackend);
       view.showAnswer(response);
       return response;
     } catch (error) {
@@ -103,7 +110,15 @@ export function createController(api, view) {
     }
   };
 
-  return { refreshHealth, rebuild, ask };
+  const selectBackend = async (backend) => {
+    selectedBackend = backend || null;
+    // Switching backends invalidates the answer on screen: it came from the
+    // other retriever.
+    view.clearAnswer();
+    return refreshHealth();
+  };
+
+  return { refreshHealth, rebuild, ask, selectBackend };
 }
 
 export function renderSourceList(container, sources, documentRef = document) {
@@ -155,6 +170,7 @@ export function createDomView(documentRef = document) {
   return {
     showHealth(health) {
       element("backend-badge").textContent = health.backend;
+      this.showBackendOptions(health);
       element("health-summary").textContent = health.index_loaded
         ? "Ready to answer"
         : "Index required";
@@ -188,6 +204,24 @@ export function createDomView(documentRef = document) {
         `${response.retrieved.length} source${response.retrieved.length === 1 ? "" : "s"}`;
       renderSourceList(element("sources"), response.retrieved, documentRef);
     },
+    showBackendOptions(health) {
+      const select = element("backend-select");
+      if (!select) return;
+      const options = health.backends || [];
+      // Hidden until a second backend exists, so the interface is unchanged
+      // when only one is configured.
+      select.hidden = options.length < 2;
+      select.replaceChildren();
+      for (const option of options) {
+        const node = documentRef.createElement("option");
+        node.value = option.backend;
+        node.textContent = option.index_loaded
+          ? option.backend
+          : `${option.backend} (no index)`;
+        if (option.backend === health.backend) node.selected = true;
+        select.append(node);
+      }
+    },
     clearAnswer() {
       const answer = element("answer");
       answer.textContent = "";
@@ -217,6 +251,9 @@ if (typeof document !== "undefined") {
   const controller = createController(createApiClient(), view);
   document.getElementById("refresh-health").addEventListener("click", controller.refreshHealth);
   document.getElementById("rebuild-index").addEventListener("click", controller.rebuild);
+  document.getElementById("backend-select").addEventListener("change", (event) => {
+    controller.selectBackend(event.target.value);
+  });
   document.getElementById("question-form").addEventListener("submit", (event) => {
     event.preventDefault();
     controller.ask(document.getElementById("query").value);

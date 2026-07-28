@@ -311,14 +311,16 @@ def validate_dataset(
     sections, _ = load_sections(docs_path)
     by_citation = {unit.citation: unit for unit in sections}
     transaction_store = TransactionStore(transaction_fixture_path)
-    for case in cases:
+    resolved = [
         _validate_case_evidence(
             case,
             by_citation=by_citation,
             transaction_store=transaction_store,
             manifest=manifest,
         )
-    return EvaluationDataset(manifest=manifest, cases=cases)
+        for case in cases
+    ]
+    return EvaluationDataset(manifest=manifest, cases=resolved)
 
 
 def _validate_case_evidence(
@@ -327,7 +329,7 @@ def _validate_case_evidence(
     by_citation: dict,
     transaction_store: TransactionStore,
     manifest: DatasetManifest,
-) -> None:
+) -> EvalCase:
     gold_by_citation = {source.citation: source for source in case.acceptable_sources}
     structured_context = None
     if case.booking_id:
@@ -343,26 +345,47 @@ def _validate_case_evidence(
         if structured_context is None:
             raise ValueError(f"{case.id}: booking fixture does not resolve")
 
-    for citation in case.oracle_sources:
-        gold = gold_by_citation[citation]
-        if DOCUMENT_CITATION_RE.match(citation):
-            unit = by_citation.get(citation)
-            if unit is None:
-                raise ValueError(f"{case.id}: unresolved document source {citation}")
-            if gold.evidence_text is not None and gold.evidence_text not in unit.text:
+    # Every acceptable document source is resolved, not only the oracle subset.
+    # An offset-only source outside oracle_sources previously kept
+    # evidence_text None forever, so _evidence_hit could never match it and its
+    # recall was silently capped for both RAG arms; an unresolvable citation
+    # there also went unreported.
+    resolved_sources: list[GoldSource] = []
+    for gold in case.acceptable_sources:
+        citation = gold.citation
+        if not DOCUMENT_CITATION_RE.match(citation):
+            resolved_sources.append(gold)
+            continue
+        unit = by_citation.get(citation)
+        if unit is None:
+            raise ValueError(f"{case.id}: unresolved document source {citation}")
+        if gold.evidence_text is not None and gold.evidence_text not in unit.text:
+            raise ValueError(
+                f"{case.id}: evidence_text not found in source {citation}"
+            )
+        if gold.start_offset is not None:
+            assert gold.end_offset is not None
+            if gold.end_offset > len(unit.text):
                 raise ValueError(
-                    f"{case.id}: evidence_text not found in source {citation}"
+                    f"{case.id}: evidence offsets exceed source {citation}"
                 )
-            if gold.start_offset is not None:
-                assert gold.end_offset is not None
-                if gold.end_offset > len(unit.text):
-                    raise ValueError(
-                        f"{case.id}: evidence offsets exceed source {citation}"
-                    )
-                gold.evidence_text = unit.text[gold.start_offset : gold.end_offset]
-        else:
-            if structured_context is None or citation not in structured_context.references:
-                raise ValueError(f"{case.id}: unresolved structured source {citation}")
+            span = unit.text[gold.start_offset : gold.end_offset]
+            if gold.evidence_text is not None and gold.evidence_text != span:
+                raise ValueError(
+                    f"{case.id}: evidence_text and offsets disagree for {citation}"
+                )
+            # GoldSource is frozen, so the backfill produces a copy.
+            gold = gold.model_copy(update={"evidence_text": span})
+        resolved_sources.append(gold)
+
+    for citation in case.oracle_sources:
+        if DOCUMENT_CITATION_RE.match(citation):
+            if citation not in by_citation:
+                raise ValueError(f"{case.id}: unresolved document source {citation}")
+        elif structured_context is None or citation not in structured_context.references:
+            raise ValueError(f"{case.id}: unresolved structured source {citation}")
+
+    return case.model_copy(update={"acceptable_sources": resolved_sources})
 
 
 # Spec 02 seed-dataset API, kept as thin wrappers over the unified validator so

@@ -357,10 +357,32 @@ accidental CLI invocation cannot spend money:
   --live
 ```
 
+Correctness grading is deterministic and offline by default. The rubric grader
+that calls the pinned answer model once per expected fact is opt-in and
+requires `--live`:
+
+```bash
+.venv/bin/kbqa-eval --live --grader openai-rubric \
+  --dataset evals/cases.jsonl \
+  --manifest evals/manifest.json \
+  --output results/eval.jsonl
+```
+
+Every result records the grader's name, version, model, prompt version, and
+settings, plus a per-fact verdict and a one-sentence justification, so a change
+in measured correctness can be attributed to the system or to the grader. The
+dataset manifest pins `grader_version`, and a run whose grader does not match
+it is rejected.
+
 Open `http://127.0.0.1:8000/ui/` after starting the API to use the browser
-interface. The page displays the configured backend and index readiness, can
+interface. The page displays the active backend and index readiness, can
 rebuild the selected index, submits questions through `/chat`, and shows ranked
 source details returned by the API. It contains no retrieval or grading logic.
+
+When the server can construct more than one backend, `/health` lists them and
+the page shows a backend selector. The request and response schemas are
+identical for every backend, so switching changes no contract and requires no
+backend-specific UI path.
 
 Run the browser-client contract tests with Node.js 20 or newer:
 

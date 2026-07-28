@@ -121,9 +121,19 @@ def _evidence_hit(gold: GoldSource, result: RetrievalResult) -> bool:
 
 
 def retrieval_metrics(case: EvalCase, results: list[RetrievalResult]) -> dict[str, Any]:
-    document_gold = [
+    acceptable_gold = [
         source for source in case.acceptable_sources if ".md#" in source.citation
     ]
+    # Spec 06A: Oracle document references are the gold relevance labels, and
+    # oracle_sources is the *minimal sufficient* evidence. Scoring against every
+    # acceptable source would mark a retriever that returned exactly the minimal
+    # evidence as incomplete. The broader acceptable set is still reported.
+    oracle = {normalize_citation(citation) for citation in case.oracle_sources}
+    document_gold = [
+        source
+        for source in acceptable_gold
+        if normalize_citation(source.citation) in oracle
+    ] or acceptable_gold
     if case.category == "unsupported":
         misleading = {
             normalize_citation(source) for source in case.unsupported_retrieval_sources
@@ -134,6 +144,7 @@ def retrieval_metrics(case: EvalCase, results: list[RetrievalResult]) -> dict[st
         return {
             "recall_at_3": None,
             "section_recall_at_3": None,
+            "acceptable_recall_at_3": None,
             "hit_rate": None,
             "first_relevant_rank": None,
             "unsupported_retrieval": (
@@ -151,6 +162,7 @@ def retrieval_metrics(case: EvalCase, results: list[RetrievalResult]) -> dict[st
         return {
             "recall_at_3": None,
             "section_recall_at_3": None,
+            "acceptable_recall_at_3": None,
             "hit_rate": None,
             "first_relevant_rank": None,
             "unsupported_retrieval": None,
@@ -174,9 +186,19 @@ def retrieval_metrics(case: EvalCase, results: list[RetrievalResult]) -> dict[st
                     else min(first_rank, result.rank)
                 )
 
+    acceptable_hits = {
+        index
+        for index, gold in enumerate(acceptable_gold)
+        for result in results[:3]
+        if normalize_citation(result.citation) == normalize_citation(gold.citation)
+        and _evidence_hit(gold, result)
+    }
     return {
         "recall_at_3": len(full_hits) / len(document_gold),
         "section_recall_at_3": len(section_hits) / len(document_gold),
+        "acceptable_recall_at_3": (
+            len(acceptable_hits) / len(acceptable_gold) if acceptable_gold else None
+        ),
         "hit_rate": bool(full_hits),
         "first_relevant_rank": first_rank,
         "unsupported_retrieval": None,
@@ -191,19 +213,26 @@ def answer_metrics(
     arm: str = "bm25",
     supplied_citations: Iterable[str] = (),
     raw_citations: list[str] | None = None,
+    grader: Any | None = None,
 ) -> dict[str, Any]:
     normalized_answer = normalize_text(answer)
-    fact_coverages = [
-        _fact_coverage(fact, answer) for fact in case.expected_facts
-    ]
-    matched_facts = [
-        coverage
-        for coverage in fact_coverages
-        if coverage >= FACT_TOKEN_RECALL_THRESHOLD
-    ]
-    correctness = (
-        len(matched_facts) / len(fact_coverages) if fact_coverages else None
+    from kbqa.evals.rubric import LexicalRubricGrader
+
+    active_grader = grader if grader is not None else LexicalRubricGrader(
+        FACT_TOKEN_RECALL_THRESHOLD
     )
+    verdicts = [
+        active_grader.grade_fact(case.question, fact, answer)
+        for fact in case.expected_facts
+    ]
+    fact_coverages = [verdict.score for verdict in verdicts]
+    matched_facts = [verdict for verdict in verdicts if verdict.supported]
+    correctness = len(matched_facts) / len(verdicts) if verdicts else None
+    # Contradiction is reported separately: an answer that states the opposite
+    # of the reference is a different failure from one that omits it.
+    contradicted_facts = [
+        verdict for verdict in verdicts if verdict.verdict == "contradicted"
+    ]
     exact_fallback = answer.strip() == FALLBACK_ANSWER
     is_contextual = arm in {"bm25", "vector", "oracle"}
     if case.answerable:
@@ -262,6 +291,17 @@ def answer_metrics(
     return {
         "correctness": correctness,
         "matched_facts": len(matched_facts),
+        "contradicted_facts": len(contradicted_facts),
+        "fact_verdicts": [
+            {
+                "expected_fact": fact,
+                "verdict": verdict.verdict,
+                "score": verdict.score,
+                "explanation": verdict.explanation,
+            }
+            for fact, verdict in zip(case.expected_facts, verdicts)
+        ],
+        **active_grader.identity.as_record(),
         "expected_facts": len(fact_coverages),
         "fact_coverages": fact_coverages,
         "fact_token_recall_threshold": FACT_TOKEN_RECALL_THRESHOLD,

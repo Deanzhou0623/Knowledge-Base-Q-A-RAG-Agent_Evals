@@ -59,7 +59,12 @@ class BM25Retriever:
 
     @staticmethod
     def _retrievable_indexes(units: list[DocumentUnit]) -> list[int]:
-        return [index for index, unit in enumerate(units) if unit.text.strip()]
+        return [
+            index
+            for index, unit in enumerate(units)
+            # heading_level 0 is pre-heading content with no resolvable anchor.
+            if unit.text.strip() and unit.heading_level > 0
+        ]
 
     @classmethod
     def _tokenized_corpus(cls, units: list[DocumentUnit]) -> list[list[str]]:
