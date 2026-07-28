@@ -25,12 +25,15 @@ shared contracts + seed dataset
   -> expand and freeze the final dataset
 ```
 
-The UI has not been implemented yet. Existing BM25 code is retained as scaffold
-work, but Markdown-specific feature development follows the Vector and UI
-phases.
-The Vector phase now has deterministic chunking and ranking, complete persisted
+The Vector phase has deterministic chunking and ranking, complete persisted
 configuration validation, restart restoration without document re-embedding,
 and phase-owned offline tests.
+
+The Markdown-specific reconciliation is complete and documented under
+[`specs/005-markdown-kb/`](specs/005-markdown-kb/): heading-hierarchy parsing,
+GitHub-style anchors with deterministic duplicate suffixes, an inspectable JSON
+index with load-time validation, and phase-owned parser, retrieval, persistence,
+and shared-contract tests.
 
 ## Retrieval strategies
 
@@ -361,6 +364,13 @@ Indexes are stored locally and must load automatically when the server restarts.
 | Vector RAG | `.kb/faiss_index/` |
 
 Calling `/index` rebuilds the relevant index from the Markdown files in `docs/`.
+
+The Markdown KB index is intentionally inspectable JSON. It records complete
+heading-section records (including heading level and hierarchy), stable IDs,
+canonical citations, the corpus fingerprint, schema/parser/tokenizer versions,
+the unmodified `rank_bm25.BM25Okapi` parameters, and the tokenized corpus needed
+for deterministic restoration. Incompatible or incomplete index files are
+reported as unavailable and are never silently rebuilt during chat.
 
 ## Evaluation focus
 
