@@ -6,6 +6,12 @@ from pydantic import BaseModel, Field, field_validator
 
 FALLBACK_ANSWER = "I cannot confirm from the knowledge base."
 
+# Shared Q&A contract constants. Every layer that pins the answer model or the
+# retrieval depth must reference these rather than repeating the literal, so a
+# contract change is a single edit.
+ANSWER_MODEL = "gpt-5.6-sol"
+SHARED_TOP_K = 3
+
 
 class DocumentUnit(BaseModel):
     id: str

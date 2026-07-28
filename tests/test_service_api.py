@@ -4,7 +4,7 @@ from pydantic import ValidationError
 
 from kbqa.api import create_app
 from kbqa.config import Settings
-from kbqa.models import FALLBACK_ANSWER, ChatRequest
+from kbqa.models import FALLBACK_ANSWER, SHARED_TOP_K, ChatRequest
 from kbqa.retrievers.markdown_kb import BM25Retriever
 from kbqa.retrievers.vector_rag import VectorRetriever
 from kbqa.service import QAService
@@ -222,3 +222,11 @@ def test_shared_contract_rejects_non_three_top_k(corpus, booking_fixture, tmp_pa
 def test_answer_model_is_pinned():
     with pytest.raises(ValidationError):
         Settings(openai_chat_model="another-model")
+
+
+def test_top_k_setting_parses_a_string_environment_value():
+    # TOP_K arrives from .env as a string; the contract check must still apply.
+    assert Settings(top_k="3").top_k == SHARED_TOP_K
+
+    with pytest.raises(ValidationError, match="top_k=3"):
+        Settings(top_k="2")

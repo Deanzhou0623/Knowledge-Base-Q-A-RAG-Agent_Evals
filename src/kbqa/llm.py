@@ -3,7 +3,7 @@ from typing import Protocol
 
 from openai import OpenAI
 
-from kbqa.models import TokenUsage
+from kbqa.models import ANSWER_MODEL, TokenUsage
 from kbqa.prompts import CLOSED_BOOK_INSTRUCTIONS, GROUNDED_INSTRUCTIONS
 
 
@@ -23,8 +23,8 @@ class AnswerGenerator(Protocol):
 
 class OpenAIAnswerGenerator:
     def __init__(self, model: str, api_key: str | None = None, max_output_tokens: int = 500):
-        if model != "gpt-5.6-sol":
-            raise ValueError("The shared Q&A contract requires gpt-5.6-sol")
+        if model != ANSWER_MODEL:
+            raise ValueError(f"The shared Q&A contract requires {ANSWER_MODEL}")
         self.model = model
         self.api_key = api_key
         self.max_output_tokens = max_output_tokens

@@ -6,6 +6,7 @@ from kbqa.llm import AnswerGenerator
 from kbqa.io import corpus_fingerprint
 from kbqa.models import (
     FALLBACK_ANSWER,
+    SHARED_TOP_K,
     ChatRequest,
     ChatResponse,
     HealthResponse,
@@ -34,14 +35,16 @@ class QAService:
         generator: AnswerGenerator,
         transaction_store: TransactionStore,
         docs_path: Path,
-        top_k: int = 3,
+        top_k: int = SHARED_TOP_K,
     ) -> None:
+        if top_k != SHARED_TOP_K:
+            raise ValueError(
+                f"The shared Q&A contract requires top_k={SHARED_TOP_K}"
+            )
         self.retriever = retriever
         self.generator = generator
         self.transaction_store = transaction_store
         self.docs_path = docs_path
-        if top_k != 3:
-            raise ValueError("The shared Q&A contract requires top_k=3")
         self.top_k = top_k
 
     def load(self) -> bool:
