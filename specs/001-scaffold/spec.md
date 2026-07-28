@@ -1,5 +1,9 @@
 # Feature Specification: Runnable RAG Evaluation Scaffold
 
+> Historical artifact: this specification records the initial all-backends
+> scaffold. New implementation work follows
+> [`../002-phased-delivery/`](../002-phased-delivery/).
+
 ## Goal
 
 Create a runnable Python scaffold implementing the contracts in `prompt.md`

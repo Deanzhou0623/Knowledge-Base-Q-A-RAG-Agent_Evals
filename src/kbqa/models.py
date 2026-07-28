@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 FALLBACK_ANSWER = "I cannot confirm from the knowledge base."
@@ -30,6 +30,12 @@ class StructuredContext(BaseModel):
     references: list[str]
 
 
+class TokenUsage(BaseModel):
+    input_tokens: int = Field(default=0, ge=0)
+    output_tokens: int = Field(default=0, ge=0)
+    total_tokens: int = Field(default=0, ge=0)
+
+
 class IndexSummary(BaseModel):
     backend: Literal["bm25", "vector"]
     files_indexed: int
@@ -46,6 +52,14 @@ class ChatRequest(BaseModel):
     expected_fixture_version: str | None = None
     requires_document_retrieval: bool = True
 
+    @field_validator("query")
+    @classmethod
+    def query_must_contain_text(cls, value: str) -> str:
+        query = value.strip()
+        if not query:
+            raise ValueError("query must contain non-whitespace text")
+        return query
+
 
 class ChatResponse(BaseModel):
     answer: str
@@ -56,6 +70,9 @@ class ChatResponse(BaseModel):
     structured_context: StructuredContext | None = None
     retrieval_ms: float
     generation_ms: float
+    model: str
+    prompt_version: str
+    token_usage: TokenUsage
 
 
 class HealthResponse(BaseModel):

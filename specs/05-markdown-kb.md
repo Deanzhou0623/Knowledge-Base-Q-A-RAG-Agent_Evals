@@ -1,9 +1,25 @@
-# Spec 02: Markdown KB Retriever
+# Spec 05: Markdown KB Retriever
 
 ## Purpose
 
 Provide the simple, transparent retrieval baseline: Markdown heading sections
-retrieved with BM25 keyword search.
+retrieved with BM25 keyword search. It is implemented after the Vector RAG
+vertical slice and UI, but must conform to the shared contracts frozen before
+either backend was built.
+
+## Delivery constraints
+
+- Implement this backend against the same retriever interface, API schemas,
+  grounded prompt, answer model, citation format, fallback, and `K = 3` used by
+  Vector RAG.
+- Reuse the frozen seed evaluation cases without rewriting questions or gold
+  evidence in response to Vector behavior.
+- Do not add semantic expansion, heading boosts, reranking, or hybrid retrieval
+  to compensate for observed Vector results.
+- Add parser, retrieval, persistence, and shared-contract tests during this
+  phase. Testing this backend is not deferred to the evaluation-runner phase.
+- The UI must consume this backend through the existing shared API; no
+  Markdown-specific UI path is permitted.
 
 ## Pipeline
 

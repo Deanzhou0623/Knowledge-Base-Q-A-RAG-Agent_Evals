@@ -27,18 +27,22 @@ Treat these documents as the detailed acceptance specifications for the build:
 
 1. [`specs/01-shared-qa-core.md`](specs/01-shared-qa-core.md) — shared API,
    retrieval contract, grounding, citations, and answer generation.
-2. [`specs/02-markdown-kb.md`](specs/02-markdown-kb.md) — heading sections,
-   BM25 retrieval, and JSON persistence.
+2. [`specs/02-seed-evaluation-dataset.md`](specs/02-seed-evaluation-dataset.md)
+   — frozen seed questions, gold evidence, and annotation rules.
 3. [`specs/03-vector-rag.md`](specs/03-vector-rag.md) — chunks, embeddings,
-   FAISS retrieval, and vector-index persistence.
-4. [`specs/04-evaluation-runner.md`](specs/04-evaluation-runner.md) — controlled
-   execution, result records, metrics, and comparison reporting.
+   FAISS retrieval, vector-index persistence, and phase tests.
+4. [`specs/04-user-interface.md`](specs/04-user-interface.md) — a
+   backend-neutral UI over the shared API.
+5. [`specs/05-markdown-kb.md`](specs/05-markdown-kb.md) — heading sections,
+   plain BM25 retrieval, JSON persistence, and phase tests.
+6. [`specs/06-evaluation-runner.md`](specs/06-evaluation-runner.md) —
+   controlled execution, blind dataset expansion, metrics, and reporting.
 
 The evaluation runner has two focused sub-specifications:
 
-- [`specs/evals/04a-retrieval-evaluation.md`](specs/evals/04a-retrieval-evaluation.md)
+- [`specs/evals/06a-retrieval-evaluation.md`](specs/evals/06a-retrieval-evaluation.md)
   for Recall@3, ranking, paraphrase robustness, retrieval failures, and latency.
-- [`specs/evals/04b-answer-evaluation.md`](specs/evals/04b-answer-evaluation.md)
+- [`specs/evals/06b-answer-evaluation.md`](specs/evals/06b-answer-evaluation.md)
   for correctness, citations, hallucinations, fallback behavior, latency, and
   answer-model cost.
 
@@ -66,6 +70,25 @@ Keep generated Spec Kit artifacts under version control. Every code change must
 trace back to a requirement and task. If implementation reveals a missing or
 incorrect requirement, update and review the specification first instead of
 allowing the code to become the undocumented source of truth.
+
+## Delivery order
+
+Implement the project in this order:
+
+```text
+shared contracts and offline test harness
+  -> frozen seed evaluation dataset
+  -> Vector RAG and its tests
+  -> backend-neutral UI and its tests
+  -> Markdown KB and its tests
+  -> evaluation runner
+  -> blind final-dataset expansion and version freeze
+  -> final controlled evaluation
+```
+
+Tests belong to every phase. The final dataset may be larger than the seed set,
+but its new questions and evidence must be written before inspecting any arm's
+outputs. Implementing Vector first must not change the final fairness contract.
 
 ## Non-negotiable behavior
 
@@ -110,6 +133,9 @@ Question
 Retrieval and indexing may differ. Answer construction must not.
 
 ## Retrieval backend A: Markdown KB
+
+The labels A and B identify experimental arms, not implementation order. Vector
+RAG is delivered first according to the roadmap above.
 
 Implement this pipeline:
 
@@ -501,16 +527,21 @@ never on `unsupported` or `user_specific`.
 
 ## Tests
 
-Add focused tests for:
+Add focused tests with the phase that owns each behavior. Do not postpone them
+until the evaluation runner:
 
-- Markdown heading parsing, including content before the first heading,
-  duplicate headings, nested headings, and empty sections;
-- deterministic citation-anchor generation;
-- deterministic vector chunking and metadata preservation;
-- top-three retrieval contract;
-- prompt construction and context delimiting;
-- exact fallback output;
-- prevention of citations outside retrieved context;
+- shared API, top-three retrieval, prompt construction, context delimiting,
+  exact fallback output, and prevention of citations outside retrieved context;
+- seed dataset schema, evidence resolution, Oracle references, corpus
+  fingerprint, and frozen version metadata;
+- Vector chunking, metadata preservation, embedding adapters, persistence,
+  restart restoration, and search;
+- UI handling of healthy, unindexed, answerable, unsupported, and server-error
+  API responses, plus safe source rendering;
+- Markdown heading parsing, including pre-heading content, duplicate and nested
+  headings, empty sections, deterministic anchors, BM25 retrieval, persistence,
+  and restart restoration;
+- the shared contract suite against both backends;
 - Oracle source resolution, minimal-evidence assembly, and verification that
   Oracle execution never invokes BM25 or FAISS;
 - deterministic synthetic transaction lookup and identical transaction context
@@ -539,21 +570,25 @@ Provide:
 1. both retrieval backends;
 2. the shared FastAPI service;
 3. persistent indexes and startup loading;
-4. sample Markdown documents;
-5. a shared grounded-answer prompt;
-6. unit and API tests;
-7. a reproducible comparison dataset and evaluation runner;
-8. machine-readable per-run results and a human-readable comparison summary;
-9. setup, configuration, indexing, serving, testing, and evaluation commands;
-10. exact dependency versions and an example environment file without secrets.
+4. a backend-neutral UI;
+5. sample Markdown documents;
+6. a shared grounded-answer prompt;
+7. phase-owned unit, contract, API, UI, and evaluation tests;
+8. a frozen seed dataset plus reproducible final comparison dataset and runner;
+9. machine-readable per-run results and a human-readable comparison summary;
+10. setup, configuration, indexing, serving, UI, testing, and evaluation
+    commands;
+11. exact dependency versions and an example environment file without secrets.
 
 ## Completion standard
 
 Do not stop after scaffolding. The task is complete when both backends can index
 the same corpus, survive a restart, answer through the same API, produce valid
-source citations or the exact fallback, pass the automated tests, and generate
-a side-by-side evaluation report under controlled settings.
+source citations or the exact fallback, operate through the backend-neutral UI,
+pass the automated tests, and generate a side-by-side evaluation report under
+controlled settings.
 
-Prioritize the core comparison. Streaming, browser UI, conversation memory,
-multi-format imports, answer filing, hybrid search, and reranking are out of
-scope until the controlled BM25-versus-FAISS evaluation works end to end.
+The minimal browser UI in Spec 04 is in scope. Streaming, conversation memory,
+multi-format imports, answer filing, hybrid search, reranking, and UI features
+beyond the specified API client remain out of scope until the controlled
+BM25-versus-FAISS evaluation works end to end.

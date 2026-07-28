@@ -152,6 +152,20 @@ def test_runner_executes_all_arms_offline(tmp_path, monkeypatch):
         "vector",
         "oracle",
     }
+    assert all("token_usage" in record for record in records)
+    assert all(record["model"] == "gpt-5.6-sol" for record in records)
+    assert all(record["prompt_version"] for record in records)
+    assert all(record["total_ms"] >= 0 for record in records)
+    # Every arm emits the same record schema so downstream grading never has to
+    # special-case a missing key.
+    assert len({frozenset(record) for record in records}) == 1
+    assert all(record["generation_ms"] >= 0 for record in records)
+    assert all(
+        record["retrieval_ms"] is None
+        if record["arm"] == "llm_only"
+        else record["retrieval_ms"] >= 0
+        for record in records
+    )
     assert not any(
         record["arm"] == "oracle" and record["question_id"] == "unsupported"
         for record in records

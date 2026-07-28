@@ -1,4 +1,4 @@
-# Spec 04A: Retrieval Evaluation
+# Spec 06A: Retrieval Evaluation
 
 ## Purpose
 

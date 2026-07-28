@@ -49,15 +49,22 @@ def run_case(
     }
     started = perf_counter()
     if arm == "llm_only":
-        answer = generator.closed_book(case.question)
+        generation_started = perf_counter()
+        generation = generator.closed_book(case.question)
+        generation_ms = (perf_counter() - generation_started) * 1000
+        answer = generation.text
         base.update(
             answer=answer,
             citations=[],
             retrieved=[],
             retrieval_metrics=None,
             answer_metrics=answer_metrics(case, answer, []),
+            retrieval_ms=None,
+            generation_ms=generation_ms,
+            token_usage=generation.token_usage.model_dump(),
         )
     elif arm == "oracle":
+        retrieval_started = perf_counter()
         retrieved = _oracle_results(case, settings)
         structured = None
         if case.booking_id:
@@ -86,9 +93,12 @@ def run_case(
                         ],
                     }
                 )
-        answer = generator.grounded(
-            build_grounded_input(case.question, retrieved, structured)
-        ).strip()
+        retrieval_ms = (perf_counter() - retrieval_started) * 1000
+        prompt_input = build_grounded_input(case.question, retrieved, structured)
+        generation_started = perf_counter()
+        generation = generator.grounded(prompt_input)
+        generation_ms = (perf_counter() - generation_started) * 1000
+        answer = generation.text.strip()
         citations = extract_citations(answer)
         allowed = set(case.oracle_sources)
         if answer != FALLBACK_ANSWER and (
@@ -102,6 +112,9 @@ def run_case(
             retrieved=[item.model_dump(mode="json") for item in retrieved],
             retrieval_metrics=None,
             answer_metrics=answer_metrics(case, answer, citations),
+            retrieval_ms=retrieval_ms,
+            generation_ms=generation_ms,
+            token_usage=generation.token_usage.model_dump(),
         )
     else:
         if service is None:
@@ -125,6 +138,9 @@ def run_case(
                 else retrieval_metrics(case, response.retrieved)
             ),
             answer_metrics=answer_metrics(case, response.answer, response.citations),
+            retrieval_ms=response.retrieval_ms,
+            generation_ms=response.generation_ms,
+            token_usage=response.token_usage.model_dump(),
         )
     base["total_ms"] = (perf_counter() - started) * 1000
     base["model"] = settings.openai_chat_model

@@ -1,5 +1,8 @@
 # Tasks: Runnable RAG Evaluation Scaffold
 
+> Historical artifact: completed task order is preserved for traceability.
+> Follow `specs/002-phased-delivery/tasks.md` for subsequent work.
+
 - [x] T001 Define package, settings, schemas, and provider protocols.
 - [x] T002 Implement deterministic Markdown parsing and fingerprints.
 - [x] T003 Implement persistent BM25 retriever.
