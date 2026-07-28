@@ -3,6 +3,8 @@ from typing import Protocol
 import numpy as np
 from openai import OpenAI
 
+from kbqa.models import TokenUsage
+
 
 class EmbeddingProvider(Protocol):
     model: str
@@ -17,6 +19,7 @@ class OpenAIEmbeddingProvider:
         self.model = model
         self.api_key = api_key
         self._client: OpenAI | None = None
+        self.token_usage = TokenUsage()
 
     @property
     def client(self) -> OpenAI:
@@ -26,6 +29,20 @@ class OpenAIEmbeddingProvider:
 
     def embed_documents(self, texts: list[str]) -> np.ndarray:
         response = self.client.embeddings.create(model=self.model, input=texts)
+        usage = getattr(response, "usage", None)
+        prompt_tokens = int(
+            getattr(usage, "prompt_tokens", 0)
+            or getattr(usage, "input_tokens", 0)
+            or 0
+        )
+        total_tokens = int(
+            getattr(usage, "total_tokens", prompt_tokens) or prompt_tokens
+        )
+        self.token_usage = TokenUsage(
+            input_tokens=self.token_usage.input_tokens + prompt_tokens,
+            output_tokens=0,
+            total_tokens=self.token_usage.total_tokens + total_tokens,
+        )
         ordered = sorted(response.data, key=lambda item: item.index)
         return np.asarray([item.embedding for item in ordered], dtype="float32")
 

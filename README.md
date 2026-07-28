@@ -6,9 +6,10 @@ semantic vector retrieval pipeline while keeping the rest of the experiment
 consistent.
 
 > [!NOTE]
-> The `scaffold` branch contains a runnable, offline-tested implementation
-> foundation. A real OpenAI evaluation run and a human-readable comparison
-> report remain explicit follow-up work; this scaffold is not benchmark evidence.
+> The repository contains an offline-tested controlled evaluation runner. A
+> checked-in report is not benchmark evidence until the final dataset is
+> expanded and frozen blind, current pricing is configured, and a live run is
+> completed with the explicit opt-in described below.
 
 ### Current status and next phase
 
@@ -21,8 +22,8 @@ shared contracts + seed dataset
   -> finish and verify Vector RAG
   -> build the backend-neutral UI
   -> reconcile and verify Markdown KB
-  -> complete the evaluation runner
   -> expand and freeze the final dataset
+  -> run and review the final controlled comparison
 ```
 
 The UI has not been implemented yet. Existing BM25 code is retained as scaffold
@@ -295,18 +296,34 @@ Run offline tests without an OpenAI key:
 .venv/bin/pytest
 ```
 
-Run the machine-readable comparison after configuring an OpenAI key:
+Validate the frozen dataset without calling OpenAI:
+
+```bash
+PYTHONPATH=src .venv/bin/python -c \
+  'from pathlib import Path; from kbqa.evals.dataset import validate_dataset; from kbqa.config import Settings; s=Settings(); validate_dataset(Path("evals/cases.jsonl"), Path("evals/manifest.json"), docs_path=s.docs_path, transaction_fixture_path=s.transaction_fixture_path)'
+```
+
+Run the controlled comparison after configuring an OpenAI key and current
+per-million-token prices in `.env`. Live provider calls require `--live`, so an
+accidental CLI invocation cannot spend money:
 
 ```bash
 .venv/bin/kbqa-eval \
   --dataset evals/cases.jsonl \
+  --manifest evals/manifest.json \
   --output results/eval.jsonl \
-  --arms llm_only bm25 vector oracle
+  --arms llm_only bm25 vector oracle \
+  --live
 ```
 
-These commands exercise the current API scaffold. UI setup and commands will be
-added during Spec 04 implementation; the README must not advertise an
-unimplemented browser interface.
+The command writes auditable per-case JSONL, `results/eval.summary.json`, and
+`results/eval.report.md`. Failed cases remain in the output with an error status.
+The frozen manifest controls category minimums and trial count; CLI trial
+overrides that disagree with it are rejected. Oracle is optional and runs only
+on answerable cases without invoking either retriever.
+
+These commands exercise the current API and evaluation implementation. UI setup
+and commands are owned by Spec 04.
 
 ## API
 

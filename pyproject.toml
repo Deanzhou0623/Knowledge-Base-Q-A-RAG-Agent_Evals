@@ -35,6 +35,9 @@ packages = ["src/kbqa"]
 [tool.pytest.ini_options]
 addopts = "-q"
 testpaths = ["tests"]
+markers = [
+  "integration: explicitly opted-in tests that call external providers",
+]
 
 [tool.coverage.run]
 branch = true
