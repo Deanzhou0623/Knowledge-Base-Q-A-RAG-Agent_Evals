@@ -20,7 +20,7 @@ STRUCTURED_CITATION_RE = re.compile(
 
 
 class GoldSource(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     citation: str
     evidence_text: str | None = None
@@ -62,7 +62,10 @@ class GoldSource(BaseModel):
 
 
 class EvalCase(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    # Frozen: the SHA-256 manifest check protects the file at load time only.
+    # Without this a runner or metric function could rewrite a question or its
+    # gold labels mid-run with no signal.
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     id: str
     category: Literal[
@@ -113,6 +116,11 @@ class EvalCase(BaseModel):
                 raise ValueError(
                     "user_specific cases require requires_document_retrieval, "
                     "booking_id, and transaction_fixture_version"
+                )
+            if self.as_of is None:
+                raise ValueError(
+                    "user_specific cases require an as_of evaluation clock so "
+                    "transaction state resolves deterministically"
                 )
             structured = [
                 citation

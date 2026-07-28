@@ -4,6 +4,8 @@ from pathlib import Path
 
 import pytest
 
+from pydantic import ValidationError
+
 from kbqa.evals.dataset import EvalCase, load_frozen_dataset
 from kbqa.io import sha256_file
 from kbqa.models import FALLBACK_ANSWER
@@ -100,6 +102,7 @@ def test_case_contract_separates_transaction_only_from_document_retrieval():
         "oracle_sources": ["booking:BK-1#status"],
         "booking_id": "BK-1",
         "transaction_fixture_version": "v1",
+        "as_of": "2026-08-01T12:00:00Z",
     }
 
     transaction_only = EvalCase.model_validate(
@@ -132,3 +135,32 @@ def test_unsupported_case_requires_exact_fallback_contract():
         }
     )
     assert case.expected_fallback == FALLBACK_ANSWER
+
+
+def test_loaded_cases_are_frozen_against_in_process_edits():
+    dataset = load_frozen_dataset(
+        MANIFEST, DOCS, TRANSACTIONS
+    )
+    case = dataset.cases[0]
+
+    with pytest.raises(ValidationError):
+        case.question = "MUTATED"
+    with pytest.raises(ValidationError):
+        case.acceptable_sources[0].citation = "MUTATED"
+
+
+def test_user_specific_cases_require_an_as_of_clock():
+    with pytest.raises(ValueError, match="as_of"):
+        EvalCase.model_validate(
+            {
+                "id": "booking-x",
+                "category": "user_specific",
+                "question": "What is the status of booking BK-1?",
+                "answerable": True,
+                "requires_document_retrieval": False,
+                "booking_id": "BK-1",
+                "transaction_fixture_version": "bookings-v1",
+                "acceptable_sources": [{"citation": "booking:BK-1#status"}],
+                "oracle_sources": ["booking:BK-1#status"],
+            }
+        )
