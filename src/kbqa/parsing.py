@@ -74,13 +74,20 @@ def load_sections(docs_path: Path) -> tuple[list[DocumentUnit], int]:
 def chunk_sections(
     sections: list[DocumentUnit], chunk_words: int, overlap: int
 ) -> list[DocumentUnit]:
+    if chunk_words <= 0:
+        raise ValueError("chunk_words must be positive")
+    if overlap < 0 or overlap >= chunk_words:
+        raise ValueError("overlap must be non-negative and smaller than chunk_words")
+
     step = chunk_words - overlap
     chunks: list[DocumentUnit] = []
     for section in sections:
         words = section.text.split()
-        windows = [words[start : start + chunk_words] for start in range(0, len(words), step)]
-        if not windows:
-            windows = [[]]
+        if not words:
+            continue
+        windows = [
+            words[start : start + chunk_words] for start in range(0, len(words), step)
+        ]
         for index, window in enumerate(windows):
             chunks.append(
                 section.model_copy(

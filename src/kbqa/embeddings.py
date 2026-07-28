@@ -4,6 +4,9 @@ import numpy as np
 from openai import OpenAI
 
 
+OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
+
+
 class EmbeddingProvider(Protocol):
     model: str
 

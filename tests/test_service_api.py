@@ -222,3 +222,8 @@ def test_shared_contract_rejects_non_three_top_k(corpus, booking_fixture, tmp_pa
 def test_answer_model_is_pinned():
     with pytest.raises(ValidationError):
         Settings(openai_chat_model="another-model")
+
+
+def test_embedding_model_is_pinned_for_production_configuration():
+    with pytest.raises(ValidationError):
+        Settings(openai_embedding_model="another-embedding-model")
