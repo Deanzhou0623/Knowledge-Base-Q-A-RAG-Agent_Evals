@@ -4,6 +4,8 @@ import numpy as np
 import pytest
 
 from kbqa.models import FALLBACK_ANSWER
+from kbqa.llm import GeneratedAnswer
+from kbqa.models import TokenUsage
 
 
 class FakeEmbeddings:
@@ -34,13 +36,19 @@ class FakeGenerator:
         self.grounded_calls = 0
         self.closed_book_calls = 0
 
-    def grounded(self, prompt_input: str) -> str:
+    def grounded(self, prompt_input: str) -> GeneratedAnswer:
         self.grounded_calls += 1
-        return self.answer
+        return GeneratedAnswer(
+            text=self.answer,
+            token_usage=TokenUsage(input_tokens=10, output_tokens=4, total_tokens=14),
+        )
 
-    def closed_book(self, question: str) -> str:
+    def closed_book(self, question: str) -> GeneratedAnswer:
         self.closed_book_calls += 1
-        return self.answer
+        return GeneratedAnswer(
+            text=self.answer,
+            token_usage=TokenUsage(input_tokens=5, output_tokens=4, total_tokens=9),
+        )
 
 
 @pytest.fixture

@@ -8,5 +8,5 @@
 - [x] T006 Move the evaluation runner after both tested backends.
 - [x] T007 Define blind final-dataset expansion and version freeze.
 - [x] T008 Update Spec Kit workflow and repository specification links.
-- [ ] T009 Reconcile the existing scaffold implementation with the new phase
+- [x] T009 Reconcile the existing scaffold implementation with the new phase
   boundaries in a separate implementation change.

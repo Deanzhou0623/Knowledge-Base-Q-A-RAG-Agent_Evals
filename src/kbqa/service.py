@@ -11,7 +11,7 @@ from kbqa.models import (
     HealthResponse,
     IndexSummary,
 )
-from kbqa.prompts import build_grounded_input
+from kbqa.prompts import PROMPT_VERSION, build_grounded_input
 from kbqa.retrievers.base import Retriever
 from kbqa.transactions import TransactionStore
 
@@ -40,6 +40,8 @@ class QAService:
         self.generator = generator
         self.transaction_store = transaction_store
         self.docs_path = docs_path
+        if top_k != 3:
+            raise ValueError("The shared Q&A contract requires top_k=3")
         self.top_k = top_k
 
     def load(self) -> bool:
@@ -80,7 +82,8 @@ class QAService:
 
         prompt_input = build_grounded_input(request.query, retrieved, structured)
         generation_started = perf_counter()
-        answer = self.generator.grounded(prompt_input).strip()
+        generation = self.generator.grounded(prompt_input)
+        answer = generation.text.strip()
         generation_ms = (perf_counter() - generation_started) * 1000
 
         allowed = {result.citation for result in retrieved}
@@ -100,4 +103,7 @@ class QAService:
             structured_context=structured,
             retrieval_ms=retrieval_ms,
             generation_ms=generation_ms,
+            model=self.generator.model,
+            prompt_version=PROMPT_VERSION,
+            token_usage=generation.token_usage,
         )
