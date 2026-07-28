@@ -295,11 +295,26 @@ Run offline tests without an OpenAI key:
 .venv/bin/pytest
 ```
 
+Validate the frozen seed dataset without calling an LLM or retriever:
+
+```bash
+.venv/bin/python -m kbqa.evals.dataset \
+  --manifest evals/seed-v1.manifest.json \
+  --docs docs \
+  --transactions fixtures/bookings.json
+```
+
+The manifest pins seed version `seed-v1`, its annotation date, the exact
+`cases.jsonl` SHA-256, the corpus fingerprint, and transaction fixture
+`bookings-v1`. A factual annotation correction requires a new dataset version,
+an updated `change_reason`, and reviewed hashes; cases must not be changed in
+response to backend outputs.
+
 Run the machine-readable comparison after configuring an OpenAI key:
 
 ```bash
 .venv/bin/kbqa-eval \
-  --dataset evals/cases.jsonl \
+  --dataset evals/seed-v1.manifest.json \
   --output results/eval.jsonl \
   --arms llm_only bm25 vector oracle
 ```

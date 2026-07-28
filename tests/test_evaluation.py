@@ -37,6 +37,7 @@ def test_retrieval_metrics_distinguish_heading_and_evidence_hits():
             "category": "company_specific",
             "question": "When?",
             "answerable": True,
+            "expected_facts": ["Refunds take 7 to 11 days."],
             "acceptable_sources": [
                 {"citation": "policy.md#refunds", "evidence_text": "7 to 11 days"}
             ],
@@ -66,6 +67,7 @@ def test_answer_metrics_require_a_citation_and_grade_fallback():
             "category": "company_specific",
             "question": "When?",
             "answerable": True,
+            "expected_facts": ["Refunds take 7 days."],
             "acceptable_sources": [
                 {"citation": "policy.md#refunds", "evidence_text": "7 days"}
             ],
@@ -77,6 +79,7 @@ def test_answer_metrics_require_a_citation_and_grade_fallback():
         category="unsupported",
         question="Where?",
         answerable=False,
+        expected_fallback=FALLBACK_ANSWER,
     )
 
     assert answer_metrics(answerable, "Seven days", [])["citation_validity"] is False
@@ -106,6 +109,7 @@ def test_runner_executes_all_arms_offline(tmp_path, monkeypatch):
                         "category": "company_specific",
                         "question": "When?",
                         "answerable": True,
+                        "expected_facts": ["Refunds take seven days."],
                         "acceptable_sources": [
                             {
                                 "citation": "policy.md#refunds",
@@ -121,6 +125,7 @@ def test_runner_executes_all_arms_offline(tmp_path, monkeypatch):
                         "category": "unsupported",
                         "question": "Where?",
                         "answerable": False,
+                        "expected_fallback": FALLBACK_ANSWER,
                     }
                 ),
             ]
