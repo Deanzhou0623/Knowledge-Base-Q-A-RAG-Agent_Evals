@@ -22,6 +22,11 @@ class _ParsedSection:
     lines: list[str]
 
 
+# Reserved slug for content preceding the first heading. Such content has no
+# anchor in the rendered document, so it must not claim a heading's slug.
+PREAMBLE_ANCHOR = "_preamble"
+
+
 def slugify_heading(heading: str) -> str:
     normalized = unicodedata.normalize("NFKC", heading).strip().lower()
     normalized = "".join(
@@ -104,9 +109,40 @@ def parse_markdown(path: Path, docs_root: Path) -> list[DocumentUnit]:
     if seen_heading or _has_content(body):
         sections.append(_ParsedSection(heading, heading_level, heading_path.copy(), body))
 
+    # Anchors are allocated for real headings first so a heading can never be
+    # displaced by the synthetic preamble section. Content before the first
+    # heading has no anchor in the rendered document, so it takes a reserved
+    # slug that cannot be confused with one, and it is not retrievable.
     duplicate_counts: defaultdict[str, int] = defaultdict(int)
+    for section in sections:
+        if section.heading_level > 0:
+            duplicate_counts[slugify_heading(section.heading)] += 1
+
+    claimed = dict(duplicate_counts)
+    duplicate_counts = defaultdict(int)
     units: list[DocumentUnit] = []
     for section in sections:
+        if section.heading_level == 0:
+            base_anchor = PREAMBLE_ANCHOR
+            suffix = 0
+            anchor = base_anchor
+            while anchor in claimed:
+                suffix += 1
+                anchor = f"{base_anchor}-{suffix}"
+            text = "\n".join(section.lines).strip()
+            units.append(
+                DocumentUnit(
+                    id=stable_unit_id(source_path, anchor),
+                    source_path=source_path,
+                    heading=section.heading,
+                    anchor=anchor,
+                    citation=f"{source_path}#{anchor}",
+                    text=text,
+                    heading_level=0,
+                    heading_path=section.heading_path,
+                )
+            )
+            continue
         base_anchor = slugify_heading(section.heading)
         duplicate_index = duplicate_counts[base_anchor]
         duplicate_counts[base_anchor] += 1
@@ -144,6 +180,8 @@ def chunk_sections(
     step = chunk_words - overlap
     chunks: list[DocumentUnit] = []
     for section in sections:
+        if section.heading_level == 0:
+            continue
         words = section.text.split()
         if not words:
             continue

@@ -110,7 +110,7 @@ def test_parser_preserves_preamble_hierarchy_raw_markdown_and_empty_sections(
         "Empty",
     ]
     assert [section.anchor for section in sections] == [
-        "document",
+        "_preamble",
         "returns",
         "timing",
         "timing-1",
@@ -197,3 +197,38 @@ def test_load_sections_discovers_nested_files_in_deterministic_order(tmp_path):
     assert file_count == 2
     assert [item.source_path for item in first] == ["a.md", "z/b.md"]
     assert [item.id for item in first] == [item.id for item in second]
+
+
+def test_a_real_heading_keeps_its_anchor_when_a_preamble_exists(tmp_path):
+    # The preamble previously took the plain "document" slug, pushing a real
+    # "## Document" heading to "document-1" and making an Oracle citation of
+    # file.md#document point at the preamble instead of the heading.
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    path = docs / "guide.md"
+    path.write_text(
+        "Intro before any heading.\n\n## Document\nThe real section.\n",
+        encoding="utf-8",
+    )
+
+    sections = parse_markdown(path, docs)
+
+    by_heading = {section.heading: section.anchor for section in sections}
+    assert by_heading["Document"] == "document"
+    assert by_heading["Document"] != "_preamble"
+    assert sections[0].anchor == "_preamble"
+
+
+def test_preamble_content_is_not_chunked_for_retrieval(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    path = docs / "guide.md"
+    path.write_text(
+        "Preamble words that are not citable.\n\n# Real\nReal body text.\n",
+        encoding="utf-8",
+    )
+
+    chunks = chunk_sections(parse_markdown(path, docs), chunk_words=10, overlap=2)
+
+    assert chunks
+    assert all(chunk.anchor != "_preamble" for chunk in chunks)

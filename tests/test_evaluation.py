@@ -515,3 +515,42 @@ def test_fact_coverage_gates_on_numbers_and_negation(answer, expected_coverage):
     )
 
     assert metrics["fact_coverages"] == [expected_coverage]
+
+
+def test_offset_only_gold_outside_oracle_is_resolved_and_scored(tmp_path):
+    # An acceptable-but-not-oracle source specified by offsets kept
+    # evidence_text None, so _evidence_hit could never match it and recall was
+    # capped below 1.0 for both RAG arms regardless of what they retrieved.
+    cases_path, manifest_path, settings = _write_dataset(tmp_path)
+    records = [
+        json.loads(line) for line in cases_path.read_text().splitlines() if line.strip()
+    ]
+    for record in records:
+        if record["id"] == "company":
+            record["acceptable_sources"].append(
+                {
+                    "citation": "policy.md#chargebacks",
+                    "start_offset": 0,
+                    "end_offset": 12,
+                }
+            )
+    cases_path.write_text(
+        "".join(json.dumps(record) + "\n" for record in records), encoding="utf-8"
+    )
+    manifest = json.loads(manifest_path.read_text())
+    manifest["cases_sha256"] = sha256_file(cases_path)
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    dataset = validate_dataset(
+        cases_path,
+        manifest_path,
+        docs_path=settings.docs_path,
+        transaction_fixture_path=settings.transaction_fixture_path,
+    )
+
+    case = next(c for c in dataset.cases if c.id == "company")
+    extra = next(
+        s for s in case.acceptable_sources if s.citation == "policy.md#chargebacks"
+    )
+    # Backfilled from the offsets, so retrieval scoring can now match it.
+    assert extra.evidence_text == "A chargeback"

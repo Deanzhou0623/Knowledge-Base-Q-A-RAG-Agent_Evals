@@ -121,9 +121,19 @@ def _evidence_hit(gold: GoldSource, result: RetrievalResult) -> bool:
 
 
 def retrieval_metrics(case: EvalCase, results: list[RetrievalResult]) -> dict[str, Any]:
-    document_gold = [
+    acceptable_gold = [
         source for source in case.acceptable_sources if ".md#" in source.citation
     ]
+    # Spec 06A: Oracle document references are the gold relevance labels, and
+    # oracle_sources is the *minimal sufficient* evidence. Scoring against every
+    # acceptable source would mark a retriever that returned exactly the minimal
+    # evidence as incomplete. The broader acceptable set is still reported.
+    oracle = {normalize_citation(citation) for citation in case.oracle_sources}
+    document_gold = [
+        source
+        for source in acceptable_gold
+        if normalize_citation(source.citation) in oracle
+    ] or acceptable_gold
     if case.category == "unsupported":
         misleading = {
             normalize_citation(source) for source in case.unsupported_retrieval_sources
@@ -134,6 +144,7 @@ def retrieval_metrics(case: EvalCase, results: list[RetrievalResult]) -> dict[st
         return {
             "recall_at_3": None,
             "section_recall_at_3": None,
+            "acceptable_recall_at_3": None,
             "hit_rate": None,
             "first_relevant_rank": None,
             "unsupported_retrieval": (
@@ -151,6 +162,7 @@ def retrieval_metrics(case: EvalCase, results: list[RetrievalResult]) -> dict[st
         return {
             "recall_at_3": None,
             "section_recall_at_3": None,
+            "acceptable_recall_at_3": None,
             "hit_rate": None,
             "first_relevant_rank": None,
             "unsupported_retrieval": None,
@@ -174,9 +186,19 @@ def retrieval_metrics(case: EvalCase, results: list[RetrievalResult]) -> dict[st
                     else min(first_rank, result.rank)
                 )
 
+    acceptable_hits = {
+        index
+        for index, gold in enumerate(acceptable_gold)
+        for result in results[:3]
+        if normalize_citation(result.citation) == normalize_citation(gold.citation)
+        and _evidence_hit(gold, result)
+    }
     return {
         "recall_at_3": len(full_hits) / len(document_gold),
         "section_recall_at_3": len(section_hits) / len(document_gold),
+        "acceptable_recall_at_3": (
+            len(acceptable_hits) / len(acceptable_gold) if acceptable_gold else None
+        ),
         "hit_rate": bool(full_hits),
         "first_relevant_rank": first_rank,
         "unsupported_retrieval": None,
