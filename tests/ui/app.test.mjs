@@ -5,6 +5,7 @@ import {
   ApiError,
   createApiClient,
   createController,
+  createDomView,
   renderSourceList,
 } from "../../src/kbqa/ui/app.js";
 
@@ -21,6 +22,8 @@ function makeView() {
     showAnswer: (value) => events.push(["answer", value]),
     showError: (value) => events.push(["error", value]),
     clearError: () => events.push(["clear-error"]),
+    clearAnswer: () => events.push(["clear-answer"]),
+    clearIndexSummary: () => events.push(["clear-index"]),
   };
 }
 
@@ -139,3 +142,66 @@ test("source renderer treats source fields as text, never markup", () => {
   assert.ok(assignedText.includes(attack));
   assert.ok(assignedText.includes(`<script>${attack}</script>`));
 });
+
+test("a failed chat clears the previous answer before showing the error", async () => {
+  const view = makeView();
+  const api = {
+    chat: async () => {
+      throw Object.assign(new Error("Server error"), { status: 500 });
+    },
+  };
+
+  assert.equal(await createController(api, view).ask("Where is my package?"), null);
+
+  const names = view.events.map(([name]) => name);
+  // Without the clear, the previous answer and its source cards stay on screen
+  // under the new question and read as its response.
+  assert.ok(names.includes("clear-answer"));
+  assert.ok(names.indexOf("clear-answer") < names.indexOf("error"));
+});
+
+test("a failed rebuild clears the progress and prior success line", async () => {
+  const view = makeView();
+  const api = {
+    rebuild: async () => {
+      throw new Error("Disk full");
+    },
+    health: async () => ({ status: "ok", backend: "bm25", index_loaded: false }),
+  };
+
+  assert.equal(await createController(api, view).rebuild(), null);
+
+  const names = view.events.map(([name]) => name);
+  assert.ok(names.includes("clear-index"));
+  assert.ok(names.indexOf("clear-index") < names.indexOf("error"));
+});
+
+test("the DOM view exposes the clearing operations the controller calls", () => {
+  const view = createDomView(stubDocument());
+  assert.equal(typeof view.clearAnswer, "function");
+  assert.equal(typeof view.clearIndexSummary, "function");
+});
+
+function stubDocument() {
+  const nodes = new Map();
+  return {
+    getElementById(id) {
+      if (!nodes.has(id)) {
+        nodes.set(id, {
+          textContent: "",
+          dataset: {},
+          classList: { add() {}, remove() {} },
+          replaceChildren() {},
+          append() {},
+        });
+      }
+      return nodes.get(id);
+    },
+    createElement: () => ({
+      textContent: "",
+      className: "",
+      dataset: {},
+      append() {},
+    }),
+  };
+}

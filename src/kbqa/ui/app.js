@@ -67,6 +67,9 @@ export function createController(api, view) {
       await refreshHealth();
       return summary;
     } catch (error) {
+      // Drop "Building the document index…" and any earlier success line so
+      // the UI never claims a completed index the failed run did not produce.
+      view.clearIndexSummary();
       view.showError(error.message);
       return null;
     } finally {
@@ -82,6 +85,9 @@ export function createController(api, view) {
     }
     view.setAsking(true);
     view.clearError();
+    // A stale answer under a new question reads as the response to that
+    // question, so clear it before the request rather than only on success.
+    view.clearAnswer();
     try {
       const response = await api.chat(normalized);
       view.showAnswer(response);
@@ -128,11 +134,14 @@ export function renderSourceList(container, sources, documentRef = document) {
     heading.textContent = source.heading;
     const citation = documentRef.createElement("code");
     citation.textContent = source.citation;
+    const unitId = documentRef.createElement("code");
+    unitId.className = "unit-id";
+    unitId.textContent = `id ${source.id}`;
     const text = documentRef.createElement("p");
     text.className = "source-text";
     text.textContent = source.text;
 
-    article.append(top, heading, citation, text);
+    article.append(top, heading, citation, unitId, text);
     container.append(article);
   }
 }
@@ -178,6 +187,19 @@ export function createDomView(documentRef = document) {
       element("source-count").textContent =
         `${response.retrieved.length} source${response.retrieved.length === 1 ? "" : "s"}`;
       renderSourceList(element("sources"), response.retrieved, documentRef);
+    },
+    clearAnswer() {
+      const answer = element("answer");
+      answer.textContent = "";
+      answer.classList.add("empty");
+      delete answer.dataset.fallback;
+      element("timing").textContent = "";
+      element("model").textContent = "";
+      element("source-count").textContent = "";
+      renderSourceList(element("sources"), [], documentRef);
+    },
+    clearIndexSummary() {
+      element("operation-message").textContent = "";
     },
     showError(message) {
       error.textContent = message;
