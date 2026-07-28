@@ -230,3 +230,8 @@ def test_top_k_setting_parses_a_string_environment_value():
 
     with pytest.raises(ValidationError, match="top_k=3"):
         Settings(top_k="2")
+
+
+def test_embedding_model_is_pinned_for_production_configuration():
+    with pytest.raises(ValidationError):
+        Settings(openai_embedding_model="another-embedding-model")

@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from kbqa.embeddings import OPENAI_EMBEDDING_MODEL
 from kbqa.models import ANSWER_MODEL, SHARED_TOP_K
 
 
@@ -13,7 +14,7 @@ class Settings(BaseSettings):
 
     openai_api_key: str | None = None
     openai_chat_model: Literal["gpt-5.6-sol"] = ANSWER_MODEL
-    openai_embedding_model: str = "text-embedding-3-small"
+    openai_embedding_model: Literal["text-embedding-3-small"] = OPENAI_EMBEDDING_MODEL
     retrieval_backend: Literal["bm25", "vector"] = "bm25"
     docs_path: Path = Path("docs")
     kb_path: Path = Path(".kb")

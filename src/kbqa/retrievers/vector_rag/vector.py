@@ -1,8 +1,9 @@
 import json
 import os
+import re
 import tempfile
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import faiss
 import numpy as np
@@ -15,7 +16,10 @@ from kbqa.parsing import chunk_sections, load_sections
 
 class VectorRetriever:
     backend = "vector"
-    schema_version = 1
+    schema_version = 2
+    normalization = "l2"
+    distance_metric = "inner_product"
+    index_type = "IndexFlatIP"
 
     def __init__(
         self,
@@ -32,6 +36,24 @@ class VectorRetriever:
         self._index: faiss.Index | None = None
         self.loaded = False
         self.corpus_fingerprint: str | None = None
+        self.files_indexed = 0
+
+    def _remove_superseded_indexes(self, keep: Path) -> None:
+        """Drop FAISS files left by earlier builds.
+
+        Each build writes a content-addressed index and repoints
+        metadata.json; without this the directory grows by one full index
+        per rebuild and no longer shows which artifact is live.
+        """
+        for existing in self.index_path.glob("index-*.faiss"):
+            if existing != keep:
+                existing.unlink(missing_ok=True)
+
+    def _clear(self) -> None:
+        self.units = []
+        self._index = None
+        self.loaded = False
+        self.corpus_fingerprint = None
         self.files_indexed = 0
 
     @property
@@ -52,19 +74,75 @@ class VectorRetriever:
         return self.index_path / "metadata.json"
 
     @staticmethod
-    def _normalize(vectors: np.ndarray) -> np.ndarray:
+    def _normalized_matrix(
+        vectors: np.ndarray, *, expected_rows: int, operation: str
+    ) -> np.ndarray:
         matrix = np.asarray(vectors, dtype="float32")
         if matrix.ndim == 1:
             matrix = matrix.reshape(1, -1)
+        if matrix.ndim != 2 or matrix.shape[0] != expected_rows or matrix.shape[1] == 0:
+            raise ValueError(
+                f"{operation} embeddings must have shape "
+                f"({expected_rows}, dimension); received {matrix.shape}"
+            )
+        if not np.isfinite(matrix).all():
+            raise ValueError(f"{operation} embeddings must contain only finite values")
+        if np.any(np.linalg.norm(matrix, axis=1) == 0):
+            raise ValueError(f"{operation} embeddings must not contain zero vectors")
+        matrix = np.ascontiguousarray(matrix)
         faiss.normalize_L2(matrix)
         return matrix
+
+    @staticmethod
+    def _valid_unit(unit: DocumentUnit) -> bool:
+        source = PurePosixPath(unit.source_path)
+        return (
+            not source.is_absolute()
+            and ".." not in source.parts
+            and source.suffix.lower() == ".md"
+            and bool(unit.heading)
+            and bool(unit.anchor)
+            and unit.citation == f"{unit.source_path}#{unit.anchor}"
+            and unit.chunk_index is not None
+            and unit.chunk_index >= 0
+            and bool(unit.text.strip())
+        )
+
+    def _valid_metadata_header(self, metadata: dict[str, object]) -> bool:
+        try:
+            created_at = datetime.fromisoformat(str(metadata["created_at"]))
+            fingerprint = metadata["corpus_fingerprint"]
+            index_file = metadata["index_file"]
+            dimension = metadata["dimension"]
+            files_indexed = metadata["files_indexed"]
+        except (KeyError, TypeError, ValueError):
+            return False
+        return (
+            created_at.tzinfo is not None
+            and isinstance(fingerprint, str)
+            and re.fullmatch(r"[0-9a-f]{64}", fingerprint) is not None
+            and isinstance(index_file, str)
+            and Path(index_file).name == index_file
+            and index_file.startswith("index-")
+            and index_file.endswith(".faiss")
+            and isinstance(dimension, int)
+            and not isinstance(dimension, bool)
+            and dimension > 0
+            and isinstance(files_indexed, int)
+            and not isinstance(files_indexed, bool)
+            and files_indexed > 0
+        )
 
     def build(self, docs_path: Path) -> IndexSummary:
         sections, file_count = load_sections(docs_path)
         units = chunk_sections(sections, self.chunk_words, self.overlap)
         if not units:
             raise ValueError("No Markdown content found to index")
-        vectors = self._normalize(self.embeddings.embed_documents([unit.text for unit in units]))
+        vectors = self._normalized_matrix(
+            self.embeddings.embed_documents([unit.text for unit in units]),
+            expected_rows=len(units),
+            operation="document",
+        )
         index = faiss.IndexFlatIP(vectors.shape[1])
         index.add(vectors)
 
@@ -79,6 +157,7 @@ class VectorRetriever:
         finally:
             if temporary_index.exists():
                 temporary_index.unlink()
+        self._remove_superseded_indexes(keep=final_index)
 
         fingerprint = corpus_fingerprint(docs_path)
         created_at = datetime.now(timezone.utc)
@@ -90,8 +169,9 @@ class VectorRetriever:
             "files_indexed": file_count,
             "embedding_model": self.embeddings.model,
             "dimension": int(vectors.shape[1]),
-            "distance_metric": "inner_product_on_l2_normalized_vectors",
-            "index_type": "IndexFlatIP",
+            "normalization": self.normalization,
+            "distance_metric": self.distance_metric,
+            "index_type": self.index_type,
             "chunk_words": self.chunk_words,
             "overlap": self.overlap,
             "faiss_sha256": index_hash,
@@ -115,22 +195,40 @@ class VectorRetriever:
 
     def load(self) -> bool:
         if not self.faiss_path.exists() or not self.metadata_path.exists():
+            self._clear()
             return False
         try:
             metadata = json.loads(self.metadata_path.read_text(encoding="utf-8"))
             compatible = (
-                metadata.get("schema_version") == self.schema_version
+                self._valid_metadata_header(metadata)
+                and metadata.get("schema_version") == self.schema_version
                 and metadata.get("backend") == self.backend
                 and metadata.get("embedding_model") == self.embeddings.model
                 and metadata.get("chunk_words") == self.chunk_words
                 and metadata.get("overlap") == self.overlap
+                and metadata.get("normalization") == self.normalization
+                and metadata.get("distance_metric") == self.distance_metric
+                and metadata.get("index_type") == self.index_type
                 and metadata.get("faiss_sha256") == sha256_file(self.faiss_path)
             )
             if not compatible:
+                self._clear()
                 return False
             units = [DocumentUnit.model_validate(item) for item in metadata["units"]]
+            if (
+                not units
+                or len({unit.id for unit in units}) != len(units)
+                or not all(self._valid_unit(unit) for unit in units)
+            ):
+                self._clear()
+                return False
             index = faiss.read_index(str(self.faiss_path))
-            if index.ntotal != len(units) or index.d != int(metadata["dimension"]):
+            if (
+                index.ntotal != len(units)
+                or index.d != int(metadata["dimension"])
+                or index.metric_type != faiss.METRIC_INNER_PRODUCT
+            ):
+                self._clear()
                 return False
             self.units = units
             self._index = index
@@ -138,22 +236,45 @@ class VectorRetriever:
             self.corpus_fingerprint = metadata["corpus_fingerprint"]
             self.files_indexed = int(metadata["files_indexed"])
             return self.loaded
-        except (KeyError, TypeError, ValueError, json.JSONDecodeError, RuntimeError):
-            self.loaded = False
+        except (
+            KeyError,
+            TypeError,
+            ValueError,
+            OSError,
+            json.JSONDecodeError,
+            RuntimeError,
+        ):
+            self._clear()
             return False
 
     def search(self, query: str, k: int = 3) -> list[RetrievalResult]:
         if not self.loaded or self._index is None:
             raise RuntimeError("Vector index is not loaded")
-        query_vector = self._normalize(self.embeddings.embed_query(query))
-        scores, indices = self._index.search(query_vector, min(k, len(self.units)))
+        if k <= 0:
+            raise ValueError("k must be positive")
+        query_vector = self._normalized_matrix(
+            self.embeddings.embed_query(query),
+            expected_rows=1,
+            operation="query",
+        )
+        if query_vector.shape[1] != self._index.d:
+            raise ValueError(
+                "Query embedding dimension does not match the persisted vector index"
+            )
+        scores, indices = self._index.search(query_vector, len(self.units))
+        ranked = sorted(
+            (
+                (float(score), int(index))
+                for score, index in zip(scores[0], indices[0])
+                if index >= 0
+            ),
+            key=lambda item: (-item[0], self.units[item[1]].id),
+        )
         results: list[RetrievalResult] = []
-        for rank, (score, index) in enumerate(zip(scores[0], indices[0]), start=1):
-            if index < 0:
-                continue
+        for rank, (score, index) in enumerate(ranked[:k], start=1):
             results.append(
                 RetrievalResult(
-                    **self.units[int(index)].model_dump(), score=float(score), rank=rank
+                    **self.units[index].model_dump(), score=score, rank=rank
                 )
             )
         return results

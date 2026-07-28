@@ -27,8 +27,10 @@ shared contracts + seed dataset
 
 The UI has not been implemented yet. Existing BM25 code is retained as scaffold
 work, but Markdown-specific feature development follows the Vector and UI
-phases. See the open reconciliation task in
-[`specs/002-phased-delivery/tasks.md`](specs/002-phased-delivery/tasks.md).
+phases.
+The Vector phase now has deterministic chunking and ranking, complete persisted
+configuration validation, restart restoration without document re-embedding,
+and phase-owned offline tests.
 
 ## Retrieval strategies
 
@@ -268,6 +270,12 @@ The default embedding model is `text-embedding-3-small`. Both retrieval systems
 use the same pinned answer model; the embedding model is used only by Vector RAG
 to create retrieval features.
 
+The initial Vector RAG configuration is deliberately fixed and auditable:
+whitespace-word chunks contain 160 words with 30 words of overlap, document and
+query vectors are L2-normalized, and FAISS `IndexFlatIP` ranks their inner
+product (cosine similarity after normalization). The persisted metadata records
+this configuration, the returned vector dimension, and the embedding model.
+
 ## Run the scaffold
 
 Python 3.10 or newer is required.
@@ -309,6 +317,13 @@ The manifest pins seed version `seed-v1`, its annotation date, the exact
 `bookings-v1`. A factual annotation correction requires a new dataset version,
 an updated `change_reason`, and reviewed hashes; cases must not be changed in
 response to backend outputs.
+
+The real Vector embedding smoke test is deliberately opt-in:
+
+```bash
+RUN_OPENAI_INTEGRATION=1 OPENAI_API_KEY="sk-..." \
+  .venv/bin/pytest tests/test_vector_integration.py
+```
 
 Run the machine-readable comparison after configuring an OpenAI key:
 
