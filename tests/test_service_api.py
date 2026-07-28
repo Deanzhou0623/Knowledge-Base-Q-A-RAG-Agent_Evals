@@ -128,6 +128,29 @@ def test_startup_load_rejects_an_index_for_changed_documents(
     assert restarted.health().index_loaded is False
 
 
+def test_startup_restores_index_and_serves_chat_without_reindexing(
+    backend, corpus, booking_fixture, tmp_path
+):
+    answer = "Refunds take 7 to 11 business days. [policy.md#refund-policy]"
+    original, _ = make_service(
+        corpus, booking_fixture, tmp_path, backend=backend, answer=answer
+    )
+    original.build_index()
+    restarted, generator = make_service(
+        corpus, booking_fixture, tmp_path, backend=backend, answer=answer
+    )
+    settings = settings_for(backend, corpus, booking_fixture)
+
+    with TestClient(create_app(settings, restarted)) as client:
+        health = client.get("/health")
+        response = client.post("/chat", json={"query": "How long are refunds?"})
+
+    assert health.json()["index_loaded"] is True
+    assert response.status_code == 200
+    assert response.json()["answer"] == answer
+    assert generator.grounded_calls == 1
+
+
 def test_health_and_index_endpoints_share_the_contract(
     backend, corpus, booking_fixture, tmp_path
 ):

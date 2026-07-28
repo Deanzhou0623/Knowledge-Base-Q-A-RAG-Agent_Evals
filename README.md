@@ -25,10 +25,10 @@ shared contracts + seed dataset
   -> expand and freeze the final dataset
 ```
 
-The UI has not been implemented yet. Existing BM25 code is retained as scaffold
-work, but Markdown-specific feature development follows the Vector and UI
-phases. See the open reconciliation task in
-[`specs/002-phased-delivery/tasks.md`](specs/002-phased-delivery/tasks.md).
+On the `spec05-markdown-kb` feature branch, the Markdown-specific reconciliation
+is complete and documented under
+[`specs/005-markdown-kb/`](specs/005-markdown-kb/). The UI and final evaluation
+runner remain separate delivery phases.
 
 ## Retrieval strategies
 
@@ -331,6 +331,13 @@ Indexes are stored locally and must load automatically when the server restarts.
 | Vector RAG | `.kb/faiss_index/` |
 
 Calling `/index` rebuilds the relevant index from the Markdown files in `docs/`.
+
+The Markdown KB index is intentionally inspectable JSON. It records complete
+heading-section records (including heading level and hierarchy), stable IDs,
+canonical citations, the corpus fingerprint, schema/parser/tokenizer versions,
+the unmodified `rank_bm25.BM25Okapi` parameters, and the tokenized corpus needed
+for deterministic restoration. Incompatible or incomplete index files are
+reported as unavailable and are never silently rebuilt during chat.
 
 ## Evaluation focus
 

@@ -1,4 +1,4 @@
-from kbqa.parsing import parse_markdown
+from kbqa.parsing import load_sections, parse_markdown, stable_unit_id
 
 
 def test_parser_preserves_empty_and_duplicate_heading_sections(tmp_path):
@@ -12,3 +12,120 @@ def test_parser_preserves_empty_and_duplicate_heading_sections(tmp_path):
     assert [section.anchor for section in sections] == ["returns", "returns-1"]
     assert sections[0].text == ""
     assert sections[1].citation == "guide.md#returns-1"
+
+
+def test_parser_preserves_preamble_hierarchy_raw_markdown_and_empty_sections(
+    tmp_path,
+):
+    docs = tmp_path / "docs"
+    path = docs / "nested" / "guide.md"
+    path.parent.mkdir(parents=True)
+    path.write_text(
+        "Intro with **Markdown**.\n\n"
+        "# Returns\n"
+        "## Timing\n"
+        "Seven to eleven days.\n"
+        "## Timing\n"
+        "### Exceptions\n"
+        "# Empty\n",
+        encoding="utf-8",
+    )
+
+    sections = parse_markdown(path, docs)
+
+    assert [section.heading for section in sections] == [
+        "Document",
+        "Returns",
+        "Timing",
+        "Timing",
+        "Exceptions",
+        "Empty",
+    ]
+    assert [section.anchor for section in sections] == [
+        "document",
+        "returns",
+        "timing",
+        "timing-1",
+        "exceptions",
+        "empty",
+    ]
+    assert sections[0].source_path == "nested/guide.md"
+    assert sections[0].text == "Intro with **Markdown**."
+    assert sections[1].text == ""
+    assert sections[2].heading_level == 2
+    assert sections[2].heading_path == ["Returns", "Timing"]
+    assert sections[4].heading_path == ["Returns", "Timing", "Exceptions"]
+    assert sections[5].heading_path == ["Empty"]
+    assert sections[5].text == ""
+
+
+def test_parser_ignores_blank_preamble_and_supports_setext_headings(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    path = docs / "guide.md"
+    path.write_text(
+        "\n\nTitle\n=====\nBody\n\nSubtitle\n--------\nMore body\n",
+        encoding="utf-8",
+    )
+
+    sections = parse_markdown(path, docs)
+
+    assert [(item.heading, item.heading_level) for item in sections] == [
+        ("Title", 1),
+        ("Subtitle", 2),
+    ]
+    assert sections[1].heading_path == ["Title", "Subtitle"]
+
+
+def test_parser_uses_github_style_anchors_and_stable_ids(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    path = docs / "guide.md"
+    path.write_text(
+        "# Shipping & Returns!\nFirst\n# Shipping & Returns!\nSecond",
+        encoding="utf-8",
+    )
+
+    first = parse_markdown(path, docs)
+    second = parse_markdown(path, docs)
+
+    assert [item.anchor for item in first] == [
+        "shipping-returns",
+        "shipping-returns-1",
+    ]
+    assert [item.id for item in first] == [item.id for item in second]
+    assert first[0].id == stable_unit_id("guide.md", "shipping-returns")
+
+
+def test_parser_does_not_split_headings_inside_fenced_code(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    path = docs / "guide.md"
+    path.write_text(
+        "# Examples\n"
+        "```markdown\n"
+        "# This is example data\n"
+        "```\n"
+        "After the fence.\n",
+        encoding="utf-8",
+    )
+
+    sections = parse_markdown(path, docs)
+
+    assert len(sections) == 1
+    assert sections[0].heading == "Examples"
+    assert "# This is example data" in sections[0].text
+
+
+def test_load_sections_discovers_nested_files_in_deterministic_order(tmp_path):
+    docs = tmp_path / "docs"
+    (docs / "z").mkdir(parents=True)
+    (docs / "a.md").write_text("# A\nA", encoding="utf-8")
+    (docs / "z" / "b.md").write_text("# B\nB", encoding="utf-8")
+
+    first, file_count = load_sections(docs)
+    second, _ = load_sections(docs)
+
+    assert file_count == 2
+    assert [item.source_path for item in first] == ["a.md", "z/b.md"]
+    assert [item.id for item in first] == [item.id for item in second]

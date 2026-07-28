@@ -14,6 +14,8 @@ class DocumentUnit(BaseModel):
     anchor: str
     citation: str
     text: str
+    heading_level: int = Field(default=1, ge=0, le=6)
+    heading_path: list[str] = Field(default_factory=list)
     chunk_index: int | None = None
 
 
