@@ -6,7 +6,7 @@ from typing import Any
 
 from kbqa.config import Settings
 from kbqa.embeddings import OpenAIEmbeddingProvider
-from kbqa.evals.dataset import EvalCase, load_cases
+from kbqa.evals.dataset import EvalCase, load_cases, load_frozen_dataset
 from kbqa.evals.metrics import answer_metrics, retrieval_metrics
 from kbqa.factory import build_service
 from kbqa.io import atomic_write_text
@@ -160,8 +160,16 @@ def run_case(
 
 
 def run(dataset: Path, output: Path, arms: list[str]) -> list[dict]:
-    cases = load_cases(dataset)
     settings = Settings()
+    dataset_version = None
+    if dataset.suffix == ".json":
+        frozen = load_frozen_dataset(
+            dataset, settings.docs_path, settings.transaction_fixture_path
+        )
+        cases = frozen.cases
+        dataset_version = frozen.manifest.dataset_version
+    else:
+        cases = load_cases(dataset)
     generator = OpenAIAnswerGenerator(
         settings.openai_chat_model,
         api_key=settings.openai_api_key,
@@ -191,6 +199,9 @@ def run(dataset: Path, output: Path, arms: list[str]) -> list[dict]:
         for arm in arms
         if arm != "oracle" or case.answerable
     ]
+    if dataset_version is not None:
+        for record in records:
+            record["dataset_version"] = dataset_version
     serialized = "".join(
         json.dumps(record, sort_keys=True) + "\n" for record in records
     )
@@ -200,7 +211,9 @@ def run(dataset: Path, output: Path, arms: list[str]) -> list[dict]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the RAG evaluation scaffold")
-    parser.add_argument("--dataset", type=Path, default=Path("evals/cases.jsonl"))
+    parser.add_argument(
+        "--dataset", type=Path, default=Path("evals/seed-v1.manifest.json")
+    )
     parser.add_argument("--output", type=Path, default=Path("results/eval.jsonl"))
     parser.add_argument("--arms", nargs="+", default=["llm_only", "bm25", "vector"])
     args = parser.parse_args()
