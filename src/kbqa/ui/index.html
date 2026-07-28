@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Inspect grounded answers from the configured knowledge-base retriever.">
+    <title>Knowledge Base Q&amp;A</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="masthead">
+        <div>
+          <p class="eyebrow">Knowledge Base Q&amp;A</p>
+          <h1>Evidence<br><span>desk</span></h1>
+          <p class="lede">Ask the configured retrieval backend, then audit exactly which source records it returned.</p>
+        </div>
+        <section class="status-card" aria-labelledby="system-status-title">
+          <div>
+            <p id="system-status-title" class="status-label">System status</p>
+            <p id="health-summary" class="status-value" aria-live="polite">Checking…</p>
+          </div>
+          <div class="status-actions">
+            <span id="backend-badge" class="badge">—</span>
+            <button id="refresh-health" class="button button-quiet" type="button">Refresh</button>
+          </div>
+        </section>
+      </header>
+
+      <section class="workspace" aria-label="Question workspace">
+        <div class="question-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="step">01 / Ask</p>
+              <h2>What would you like to confirm?</h2>
+            </div>
+            <button id="rebuild-index" class="button button-secondary" type="button">Rebuild index</button>
+          </div>
+          <form id="question-form">
+            <label for="query">Question</label>
+            <textarea id="query" name="query" rows="4" maxlength="2000" required
+              placeholder="How long do refunds take?"></textarea>
+            <div class="form-footer">
+              <p class="hint">Answers use only retrieved knowledge-base context.</p>
+              <button id="ask-button" class="button button-primary" type="submit">Ask question</button>
+            </div>
+          </form>
+          <p id="operation-message" class="operation-message" role="status" aria-live="polite"></p>
+          <p id="error-message" class="error-message" role="alert" hidden></p>
+        </div>
+
+        <section class="answer-panel" aria-labelledby="answer-title">
+          <p class="step">02 / Answer</p>
+          <h2 id="answer-title">Grounded response</h2>
+          <p id="answer" class="answer empty">Your answer will appear here.</p>
+          <div class="answer-meta">
+            <span id="timing">Retrieval — · Generation —</span>
+            <span id="model">Model —</span>
+          </div>
+        </section>
+      </section>
+
+      <section class="sources-panel" aria-labelledby="sources-title">
+        <div class="panel-heading">
+          <div>
+            <p class="step">03 / Inspect</p>
+            <h2 id="sources-title">Retrieved sources</h2>
+          </div>
+          <span id="source-count" class="source-count">0 sources</span>
+        </div>
+        <div id="sources" class="sources-list">
+          <p class="empty-sources">Retrieved identifiers, headings, ranks, and raw backend scores will appear here.</p>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

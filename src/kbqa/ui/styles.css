@@ -1,0 +1,142 @@
+:root {
+  color-scheme: light;
+  --ink: #102033;
+  --muted: #5d6d7c;
+  --paper: #eaf0f4;
+  --panel: #fbfdff;
+  --line: #bdc9d3;
+  --accent: #1456d9;
+  --accent-light: #dce7ff;
+  --signal: #ff6b35;
+  --warning: #b83220;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    linear-gradient(rgba(16, 32, 51, .045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 32, 51, .045) 1px, transparent 1px),
+    var(--paper);
+  background-size: 32px 32px;
+}
+
+button, textarea { font: inherit; }
+
+.shell {
+  width: min(1160px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 3rem 0 5rem;
+}
+
+.masthead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 2rem;
+  align-items: end;
+  margin-bottom: 2rem;
+}
+
+.eyebrow, .step, .status-label {
+  margin: 0 0 .55rem;
+  color: var(--accent);
+  font-size: .72rem;
+  font-weight: 750;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+h1 {
+  max-width: 760px;
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  font-size: clamp(3.5rem, 9vw, 7.5rem);
+  font-weight: 800;
+  letter-spacing: -.07em;
+  line-height: .72;
+  text-transform: uppercase;
+}
+
+h1 span { margin-left: clamp(2rem, 9vw, 8rem); color: var(--accent); }
+.lede { max-width: 680px; margin: 1rem 0 0; color: var(--muted); font-size: 1.05rem; }
+.status-card, .question-panel, .answer-panel, .sources-panel {
+  border: 1px solid var(--line);
+  background: rgba(251, 253, 255, .94);
+  box-shadow: 7px 7px 0 rgba(16, 32, 51, .08);
+}
+
+.status-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 1.1rem 1.2rem;
+  border-top: 6px solid var(--signal);
+}
+
+.status-value { margin: 0; font-weight: 700; }
+.status-value[data-ready="false"] { color: var(--warning); }
+.status-actions { display: flex; align-items: center; gap: .65rem; }
+.badge { padding: .35rem .55rem; background: var(--accent-light); font: 700 .72rem ui-monospace, monospace; text-transform: uppercase; }
+
+.workspace {
+  display: grid;
+  grid-template-columns: 1.08fr .92fr;
+  gap: 1rem;
+}
+
+.question-panel, .answer-panel, .sources-panel { padding: clamp(1.25rem, 3vw, 2rem); }
+.panel-heading { display: flex; justify-content: space-between; gap: 1rem; align-items: start; }
+h2 { margin: 0 0 1.35rem; font: 750 clamp(1.35rem, 3vw, 1.85rem) "Avenir Next Condensed", "Arial Narrow", sans-serif; letter-spacing: -.02em; }
+label { display: block; margin-bottom: .5rem; font-size: .82rem; font-weight: 750; }
+textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 8.5rem;
+  padding: 1rem;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid #aeb8b2;
+  border-radius: .25rem;
+  line-height: 1.5;
+}
+textarea:focus { outline: 3px solid rgba(20, 86, 217, .18); border-color: var(--accent); }
+.form-footer { display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin-top: 1rem; }
+.hint { margin: 0; color: var(--muted); font-size: .82rem; }
+.button { padding: .7rem .9rem; border: 1px solid transparent; border-radius: .2rem; cursor: pointer; font-weight: 750; }
+.button:focus-visible, textarea:focus-visible { outline: 3px solid rgba(20, 86, 217, .3); outline-offset: 2px; }
+.button:disabled { cursor: wait; opacity: .6; }
+.button-primary { color: white; background: var(--accent); }
+.button-secondary { color: var(--accent); background: transparent; border-color: var(--accent); }
+.button-quiet { padding: .4rem .55rem; color: var(--muted); background: transparent; border-color: var(--line); }
+.answer-panel { display: flex; min-height: 360px; flex-direction: column; }
+.answer { flex: 1; margin: 0; font: 550 1.15rem/1.65 "Avenir Next", "Segoe UI", sans-serif; white-space: pre-wrap; }
+.answer.empty { color: var(--muted); font-style: italic; }
+.answer[data-fallback="true"] { color: var(--warning); }
+.answer-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .74rem; }
+.operation-message { min-height: 1.2em; margin: 1rem 0 0; color: var(--accent); font-size: .85rem; }
+.error-message { margin: .6rem 0 0; color: var(--warning); font-weight: 650; }
+.sources-panel { margin-top: 1rem; }
+.source-count { color: var(--muted); font-size: .8rem; }
+.sources-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; }
+.source-card { min-width: 0; padding: 1rem; border: 1px solid var(--line); border-top: 4px solid var(--accent); background: #fff; }
+.source-topline { display: flex; justify-content: space-between; gap: .6rem; color: var(--muted); font: 700 .68rem ui-monospace, monospace; text-transform: uppercase; }
+.source-card h3 { margin: 1rem 0 .45rem; font: 750 1.08rem "Avenir Next Condensed", "Arial Narrow", sans-serif; }
+.source-card code { display: block; overflow-wrap: anywhere; color: var(--accent); font-size: .75rem; }
+.source-text { max-height: 12rem; margin: .8rem 0 0; overflow: auto; color: var(--muted); font-size: .84rem; line-height: 1.5; white-space: pre-wrap; }
+.empty-sources { margin: 0; color: var(--muted); font-style: italic; }
+
+@media (max-width: 800px) {
+  .masthead, .workspace { grid-template-columns: 1fr; }
+  .sources-list { grid-template-columns: 1fr; }
+  .masthead { align-items: stretch; }
+}
+
+@media (max-width: 520px) {
+  .shell { width: min(100% - 1rem, 1160px); padding-top: 1.5rem; }
+  .panel-heading, .form-footer { align-items: stretch; flex-direction: column; }
+  .button { width: 100%; }
+}

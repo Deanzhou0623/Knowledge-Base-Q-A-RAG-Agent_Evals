@@ -1,7 +1,10 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from kbqa.config import Settings, get_settings
 from kbqa.factory import build_service
@@ -24,9 +27,15 @@ def create_app(
     app = FastAPI(
         title="Knowledge Base Q&A RAG Agent", version="0.1.0", lifespan=lifespan
     )
+    ui_path = Path(__file__).with_name("ui")
+    app.mount("/ui", StaticFiles(directory=ui_path, html=True), name="ui")
 
     def get_service(request: Request) -> QAService:
         return request.app.state.service
+
+    @app.get("/", include_in_schema=False)
+    def root() -> RedirectResponse:
+        return RedirectResponse(url="/ui/")
 
     @app.get("/health", response_model=HealthResponse)
     def health(request: Request) -> HealthResponse:
